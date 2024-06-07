@@ -37,7 +37,7 @@ services:
     depends_on:
       - mariadb
     ports:
-      - "8080:8080"
+      - "80:80"
     environment:
       DB_HOST: mariadb
       DB_USER: user

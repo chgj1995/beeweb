@@ -14,7 +14,7 @@ RUN npm install
 COPY . .
 
 # Expose the port the app runs on
-EXPOSE 8080
+EXPOSE 80
 
 # Start the app
 CMD ["./wait-for-it.sh", "mariadb:3306", "--", "node", "server.js"]
