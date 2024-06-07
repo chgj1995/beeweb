@@ -1,0 +1,11 @@
+{
+  "name": "thingspeak-data-collector",
+  "version": "1.0.0",
+  "description": "Data collector service to fetch and store Thingspeak data",
+  "main": "index.js",
+  "dependencies": {
+    "axios": "^0.21.1",
+    "mysql": "^2.18.1",
+    "node-schedule": "^2.0.0"
+  }
+}
