@@ -1,0 +1,14 @@
+# Thingspeak 설정파일 추가
+mv .env_example .env_example
+
+# npm install 에러 발생 시 오류 해결
+ufw disable
+
+# 종료 및 삭제
+sudo docker-compose down -v
+
+# 시작
+sudo docker-compose up --build
+
+# 백그라운드에서 시작
+sudo docker-compose up -d
