@@ -33,43 +33,60 @@ const connectToDatabase = () => {
   });
 };
 
-const fetchData = async (connection, group_id) => {
-  let url;
-  if(group_id == 1) {
-    url = `https://api.thingspeak.com/channels/${process.env.CHANNEL_ID1}/feeds.json?results=10`;
-  }
-  if(group_id == 2) {
-    url = `https://api.thingspeak.com/channels/${process.env.CHANNEL_ID2}/feeds.json?results=10`;
-  }
+const fetchAndInsertData = async (connection, group_id, results = 5) => {
+  let url = `https://api.thingspeak.com/channels/${process.env[`CHANNEL_ID${group_id}`]}/feeds.json?results=${results}`;
   console.log(`Fetching data from: ${url}`);
+  
   try {
     const response = await axios.get(url);
     const data = response.data.feeds;
+    const maxEntryId = response.data.channel.last_entry_id;
 
     if (!data || data.length === 0) {
       console.log('No data found in the response.');
-      return;
+      return maxEntryId;
     }
 
-    data.forEach(entry => {
+    let insertedCount = 0;
+    for (let entry of data) {
       const query = `
         INSERT INTO inout_data (entry_id, group_id, field1, field2, field3, field4, field5, field6, created_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
-        field1 = VALUES(field1),
-        field2 = VALUES(field2),
-        field3 = VALUES(field3),
-        field4 = VALUES(field4),
-        field5 = VALUES(field5),
-        field6 = VALUES(field6),
-        created_at = VALUES(created_at)
+          field1 = VALUES(field1),
+          field2 = VALUES(field2),
+          field3 = VALUES(field3),
+          field4 = VALUES(field4),
+          field5 = VALUES(field5),
+          field6 = VALUES(field6),
+          created_at = VALUES(created_at)
       `;
-      const values = [entry.entry_id, group_id, entry.field1, entry.field2, entry.field3, entry.field4, entry.field5, entry.field6, convertToMySQLDateTime(entry.created_at)];
-      connection.query(query, values, (error, results, fields) => {
-        if (error) throw error;
-        console.log('Data inserted/updated for entry_id:', entry.entry_id);
+      const values = [
+        entry.entry_id,
+        group_id,
+        entry.field1,
+        entry.field2,
+        entry.field3,
+        entry.field4,
+        entry.field5,
+        entry.field6,
+        convertToMySQLDateTime(entry.created_at)
+      ];
+
+      await new Promise((resolve, reject) => {
+        connection.query(query, values, (error, results, fields) => {
+          if (error) return reject(error);
+          resolve(results);
+        });
       });
-    });
+
+      insertedCount++;
+      if (insertedCount % 100 === 0) {
+        console.log(`Inserted/updated ${insertedCount} rows`);
+      }
+    }
+
+    return maxEntryId;
   } catch (error) {
     console.error('Error fetching data:', error);
     if (error.response) {
@@ -84,17 +101,26 @@ const startScheduler = async () => {
     const connection = await connectToDatabase();
     console.log('Scheduler started. Fetching data immediately...');
 
-    const fetchDataWithDelay = async () => {
+    const fetchDataWithDelay = async (isInitial = false) => {
       const currentTime = new Date().toLocaleString();
       console.log(`[${currentTime}] Fetching data...`);
-      await fetchData(connection, 1);
-      await fetchData(connection, 2);
-      console.log('Waiting for 1 minute before fetching data again...');
-      setTimeout(fetchDataWithDelay, 10*60*1000); // 10분마다 실행
+
+      if (isInitial) {
+        await fetchAndInsertData(connection, 1, 8000);
+        await fetchAndInsertData(connection, 2, 8000);
+      } else {
+        await fetchAndInsertData(connection, 1);
+        await fetchAndInsertData(connection, 2);
+      }
+
+      console.log('Waiting for 10 minutes before fetching data again...');
+      setTimeout(() => fetchDataWithDelay(false), 5 * 60 * 1000); // 5분마다 실행
     };
 
-    // 처음 즉시 실행
-    fetchDataWithDelay();
+    // 초기 실행에서는 8000개 데이터를 가져옴
+    await fetchDataWithDelay(true);
+
+    // 이후에는 5개 데이터를 주기적으로 가져옴
   } catch (error) {
     console.error('Failed to connect to the database:', error);
   }

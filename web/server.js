@@ -37,9 +37,28 @@ const connectToDatabase = () => {
   });
 };
 
-const fetchInOutData = async (connection, group_id) => {
+const fetchInOutData = async (connection, hive_id) => {
   return new Promise((resolve, reject) => {
-    const query = `SELECT * FROM inout_data WHERE group_id = ${group_id} ORDER BY created_at DESC LIMIT 10`;
+    hive_id = parseInt(hive_id, 10);  // hive_id를 정수로 변환
+
+    let query = '';
+    if (hive_id === 1) {
+      query = `SELECT entry_id, field1 AS in_field, field2 AS out_field FROM inout_data WHERE group_id = 1 AND field1 IS NOT NULL AND field2 IS NOT NULL ORDER BY created_at DESC LIMIT 10`;
+    } else if (hive_id === 2) {
+      query = `SELECT entry_id, field3 AS in_field, field4 AS out_field FROM inout_data WHERE group_id = 1 AND field3 IS NOT NULL AND field4 IS NOT NULL ORDER BY created_at DESC LIMIT 10`;
+    } else if (hive_id === 3) {
+      query = `SELECT entry_id, field5 AS in_field, field6 AS out_field FROM inout_data WHERE group_id = 1 AND field5 IS NOT NULL AND field6 IS NOT NULL ORDER BY created_at DESC LIMIT 10`;
+    } else if (hive_id === 4) {
+      query = `SELECT entry_id, field1 AS in_field, field2 AS out_field FROM inout_data WHERE group_id = 2 AND field1 IS NOT NULL AND field2 IS NOT NULL ORDER BY created_at DESC LIMIT 10`;
+    } else if (hive_id === 5) {
+      query = `SELECT entry_id, field3 AS in_field, field4 AS out_field FROM inout_data WHERE group_id = 2 AND field3 IS NOT NULL AND field4 IS NOT NULL ORDER BY created_at DESC LIMIT 10`;
+    } else if (hive_id === 6) {
+      query = `SELECT entry_id, field5 AS in_field, field6 AS out_field FROM inout_data WHERE group_id = 2 AND field5 IS NOT NULL AND field6 IS NOT NULL ORDER BY created_at DESC LIMIT 10`;
+    } else {
+      reject(new Error('Invalid hive_id'));
+      return;
+    }
+
     connection.query(query, (error, results, fields) => {
       if (error) {
         console.error('Error querying the database:', error);
@@ -47,25 +66,18 @@ const fetchInOutData = async (connection, group_id) => {
       }
 
       const entry_ids = results.map(row => row.entry_id);
-      const field1Data = results.map(row => row.field1);
-      const field2Data = results.map(row => row.field2);
-      const field3Data = results.map(row => row.field3);
-      const field4Data = results.map(row => row.field4);
-      const field5Data = results.map(row => row.field5);
-      const field6Data = results.map(row => row.field6);
+      const inFieldData = results.map(row => row.in_field);
+      const outFieldData = results.map(row => row.out_field);
 
       resolve({
         entry_ids,
-        field1: field1Data,
-        field2: field2Data,
-        field3: field3Data,
-        field4: field4Data,
-        field5: field5Data,
-        field6: field6Data,
+        in: inFieldData,
+        out: outFieldData,
       });
     });
   });
 };
+
 
 const fetchSensorData = async (connection, hive_id) => {
   return new Promise((resolve, reject) => {
