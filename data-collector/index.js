@@ -114,7 +114,7 @@ const startScheduler = async () => {
       }
 
       console.log('Waiting for 10 minutes before fetching data again...');
-      setTimeout(() => fetchDataWithDelay(false), 5 * 60 * 1000); // 5분마다 실행
+      setTimeout(() => fetchDataWithDelay(false), 10 * 60 * 1000); // 10분마다 실행
     };
 
     // 초기 실행에서는 8000개 데이터를 가져옴

@@ -9,6 +9,7 @@ app.use(express.static('public'));
 
 // Serve Chart.js from node_modules
 app.use('/chart.js', express.static(path.join(__dirname, 'node_modules/chart.js/dist')));
+app.use('/chartjs-adapter-date-fns', express.static(path.join(__dirname, 'node_modules/chartjs-adapter-date-fns/dist')));
 
 const dbConfig = {
   host: process.env.DB_HOST,
@@ -43,17 +44,17 @@ const fetchInOutData = async (connection, hive_id) => {
 
     let query = '';
     if (hive_id === 1) {
-      query = `SELECT entry_id, field1 AS in_field, field2 AS out_field FROM inout_data WHERE group_id = 1 AND field1 IS NOT NULL AND field2 IS NOT NULL ORDER BY created_at DESC LIMIT 10`;
+      query = `SELECT created_at, field1 AS in_field, field2 AS out_field FROM inout_data WHERE group_id = 1 AND field1 IS NOT NULL AND field2 IS NOT NULL ORDER BY created_at DESC LIMIT 10`;
     } else if (hive_id === 2) {
-      query = `SELECT entry_id, field3 AS in_field, field4 AS out_field FROM inout_data WHERE group_id = 1 AND field3 IS NOT NULL AND field4 IS NOT NULL ORDER BY created_at DESC LIMIT 10`;
+      query = `SELECT created_at, field3 AS in_field, field4 AS out_field FROM inout_data WHERE group_id = 1 AND field3 IS NOT NULL AND field4 IS NOT NULL ORDER BY created_at DESC LIMIT 10`;
     } else if (hive_id === 3) {
-      query = `SELECT entry_id, field5 AS in_field, field6 AS out_field FROM inout_data WHERE group_id = 1 AND field5 IS NOT NULL AND field6 IS NOT NULL ORDER BY created_at DESC LIMIT 10`;
+      query = `SELECT created_at, field5 AS in_field, field6 AS out_field FROM inout_data WHERE group_id = 1 AND field5 IS NOT NULL AND field6 IS NOT NULL ORDER BY created_at DESC LIMIT 10`;
     } else if (hive_id === 4) {
-      query = `SELECT entry_id, field1 AS in_field, field2 AS out_field FROM inout_data WHERE group_id = 2 AND field1 IS NOT NULL AND field2 IS NOT NULL ORDER BY created_at DESC LIMIT 10`;
+      query = `SELECT created_at, field1 AS in_field, field2 AS out_field FROM inout_data WHERE group_id = 2 AND field1 IS NOT NULL AND field2 IS NOT NULL ORDER BY created_at DESC LIMIT 10`;
     } else if (hive_id === 5) {
-      query = `SELECT entry_id, field3 AS in_field, field4 AS out_field FROM inout_data WHERE group_id = 2 AND field3 IS NOT NULL AND field4 IS NOT NULL ORDER BY created_at DESC LIMIT 10`;
+      query = `SELECT created_at, field3 AS in_field, field4 AS out_field FROM inout_data WHERE group_id = 2 AND field3 IS NOT NULL AND field4 IS NOT NULL ORDER BY created_at DESC LIMIT 10`;
     } else if (hive_id === 6) {
-      query = `SELECT entry_id, field5 AS in_field, field6 AS out_field FROM inout_data WHERE group_id = 2 AND field5 IS NOT NULL AND field6 IS NOT NULL ORDER BY created_at DESC LIMIT 10`;
+      query = `SELECT created_at, field5 AS in_field, field6 AS out_field FROM inout_data WHERE group_id = 2 AND field5 IS NOT NULL AND field6 IS NOT NULL ORDER BY created_at DESC LIMIT 10`;
     } else {
       reject(new Error('Invalid hive_id'));
       return;
@@ -65,19 +66,18 @@ const fetchInOutData = async (connection, hive_id) => {
         return reject(error);
       }
 
-      const entry_ids = results.map(row => row.entry_id);
+      const created_at = results.map(row => row.created_at);
       const inFieldData = results.map(row => row.in_field);
       const outFieldData = results.map(row => row.out_field);
 
       resolve({
-        entry_ids,
+        created_at,
         in: inFieldData,
         out: outFieldData,
       });
     });
   });
 };
-
 
 const fetchSensorData = async (connection, hive_id) => {
   return new Promise((resolve, reject) => {
@@ -88,13 +88,13 @@ const fetchSensorData = async (connection, hive_id) => {
         return reject(error);
       }
 
-      const data_id = results.map(row => row.data_id);
+      const time = results.map(row => row.time);
       const tempData = results.map(row => row.temp);
       const humiData = results.map(row => row.humi);
       const co2Data = results.map(row => row.co2);
 
       resolve({
-        data_id,
+        time,
         temp: tempData,
         humi: humiData,
         co2: co2Data,
