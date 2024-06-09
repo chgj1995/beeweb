@@ -3,17 +3,62 @@
 <head>
   <title>Data Charts</title>
   <script src="/chart.js/chart.min.js"></script>
+  <style>
+    .chart-block {
+      margin-bottom: 50px;
+    }
+    .chart-block canvas {
+      display: block;
+      margin: 0 auto;
+      height: 500; /* 원하는 높이로 설정 */
+    }
+  </style>
 </head>
 <body>
   <h1>Data Charts</h1>
-  <div>
-    <canvas id="chart1"></canvas>
-    <canvas id="chart2"></canvas>
-    <canvas id="chart3"></canvas>
-    <canvas id="chart4"></canvas>
-    <canvas id="chart5"></canvas>
-    <canvas id="chart6"></canvas>
+  
+  <div class="chart-block" id="hive1">
+    <h2>Hive 1</h2>
+    <canvas id="hive1_io"></canvas>
+    <canvas id="hive1_th"></canvas>
+    <canvas id="hive1_co2"></canvas>
   </div>
+  
+  <div class="chart-block" id="hive2">
+    <h2>Hive 2</h2>
+    <canvas id="hive2_io"></canvas>
+    <canvas id="hive2_th"></canvas>
+    <canvas id="hive2_co2"></canvas>
+  </div>
+
+  <div class="chart-block" id="hive3">
+    <h2>Hive 3</h2>
+    <canvas id="hive3_io"></canvas>
+    <canvas id="hive3_th"></canvas>
+    <canvas id="hive3_co2"></canvas>
+  </div>
+
+  <div class="chart-block" id="hive4">
+    <h2>Hive 4</h2>
+    <canvas id="hive4_io"></canvas>
+    <canvas id="hive4_th"></canvas>
+    <canvas id="hive4_co2"></canvas>
+  </div>
+
+  <div class="chart-block" id="hive5">
+    <h2>Hive 5</h2>
+    <canvas id="hive5_io"></canvas>
+    <canvas id="hive5_th"></canvas>
+    <canvas id="hive5_co2"></canvas>
+  </div>
+
+  <div class="chart-block" id="hive6">
+    <h2>Hive 6</h2>
+    <canvas id="hive6_io"></canvas>
+    <canvas id="hive6_th"></canvas>
+    <canvas id="hive6_co2"></canvas>
+  </div>
+
   <script src="/scripts/charts.js"></script>
 </body>
 </html>

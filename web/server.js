@@ -10,7 +10,6 @@ app.use(express.static('public'));
 // Serve Chart.js from node_modules
 app.use('/chart.js', express.static(path.join(__dirname, 'node_modules/chart.js/dist')));
 
-
 const dbConfig = {
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -38,9 +37,10 @@ const connectToDatabase = () => {
   });
 };
 
-const fetchData = async (connection) => {
+const fetchInOutData = async (connection, group_id) => {
   return new Promise((resolve, reject) => {
-    connection.query('SELECT * FROM data', (error, results, fields) => {
+    const query = `SELECT * FROM inout_data WHERE group_id = ${group_id} ORDER BY created_at DESC LIMIT 10`;
+    connection.query(query, (error, results, fields) => {
       if (error) {
         console.error('Error querying the database:', error);
         return reject(error);
@@ -67,18 +67,54 @@ const fetchData = async (connection) => {
   });
 };
 
+const fetchSensorData = async (connection, hive_id) => {
+  return new Promise((resolve, reject) => {
+    const query = `SELECT * FROM sensor_data WHERE hive_id = ${hive_id} ORDER BY time DESC LIMIT 10`;
+    connection.query(query, (error, results, fields) => {
+      if (error) {
+        console.error('Error querying the database:', error);
+        return reject(error);
+      }
+
+      const data_id = results.map(row => row.data_id);
+      const tempData = results.map(row => row.temp);
+      const humiData = results.map(row => row.humi);
+      const co2Data = results.map(row => row.co2);
+
+      resolve({
+        data_id,
+        temp: tempData,
+        humi: humiData,
+        co2: co2Data,
+      });
+    });
+  });
+};
+
+const createApiHandler = (connection) => {
+  return async (req, res) => {
+    const { type, id } = req.params;
+    console.log(`Received request for /api/get/${type}/${id}`);
+    try {
+      let data;
+      if (type === 'inout') {
+        data = await fetchInOutData(connection, id);
+      } else if (type === 'sensor') {
+        data = await fetchSensorData(connection, id);
+      } else {
+        return res.status(400).send('Invalid request type');
+      }
+      res.json(data);
+    } catch (error) {
+      console.error(`Error fetching data for ${type}/${id}:`, error);
+      res.status(500).send('Internal Server Error');
+    }
+  };
+};
+
 connectToDatabase()
   .then(connection => {
-    app.get('/api/data', async (req, res) => {
-      console.log('Received request for /api/data');
-      try {
-        const data = await fetchData(connection);
-        res.json(data);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-        res.status(500).send('Internal Server Error');
-      }
-    });
+    app.get('/api/get/:type/:id', createApiHandler(connection));
 
     app.listen(port, () => {
       console.log(`Server is running on port ${port}`);

@@ -3,7 +3,7 @@ FROM mariadb:latest
 
 # Set environment variables for MariaDB
 ENV MYSQL_ROOT_PASSWORD=rootpassword
-ENV MYSQL_DATABASE=thingspeak_data
+ENV MYSQL_DATABASE=hive_data
 ENV MYSQL_USER=user
 ENV MYSQL_PASSWORD=password
 

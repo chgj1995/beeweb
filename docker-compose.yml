@@ -9,7 +9,7 @@ services:
       - "3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: thingspeak_data
+      MYSQL_DATABASE: hive_data
       MYSQL_USER: user
       MYSQL_PASSWORD: password
     volumes:
@@ -26,8 +26,9 @@ services:
       DB_HOST: mariadb
       DB_USER: user
       DB_PASSWORD: password
-      DB_NAME: thingspeak_data
-      CHANNEL_ID: ${CHANNEL_ID}
+      DB_NAME: hive_data
+      CHANNEL_ID1: ${CHANNEL_ID1}
+      CHANNEL_ID2: ${CHANNEL_ID2}
     restart: always
 
   web:
@@ -42,7 +43,7 @@ services:
       DB_HOST: mariadb
       DB_USER: user
       DB_PASSWORD: password
-      DB_NAME: thingspeak_data
+      DB_NAME: hive_data
     restart: always
 
 volumes:

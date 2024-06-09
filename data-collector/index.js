@@ -33,8 +33,14 @@ const connectToDatabase = () => {
   });
 };
 
-const fetchData = async (connection) => {
-  const url = `https://api.thingspeak.com/channels/${process.env.CHANNEL_ID}/feeds.json?results=10`;
+const fetchData = async (connection, group_id) => {
+  let url;
+  if(group_id == 1) {
+    url = `https://api.thingspeak.com/channels/${process.env.CHANNEL_ID1}/feeds.json?results=10`;
+  }
+  if(group_id == 2) {
+    url = `https://api.thingspeak.com/channels/${process.env.CHANNEL_ID2}/feeds.json?results=10`;
+  }
   console.log(`Fetching data from: ${url}`);
   try {
     const response = await axios.get(url);
@@ -47,8 +53,8 @@ const fetchData = async (connection) => {
 
     data.forEach(entry => {
       const query = `
-        INSERT INTO data (entry_id, field1, field2, field3, field4, field5, field6, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO inout_data (entry_id, group_id, field1, field2, field3, field4, field5, field6, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
         field1 = VALUES(field1),
         field2 = VALUES(field2),
@@ -58,7 +64,7 @@ const fetchData = async (connection) => {
         field6 = VALUES(field6),
         created_at = VALUES(created_at)
       `;
-      const values = [entry.entry_id, entry.field1, entry.field2, entry.field3, entry.field4, entry.field5, entry.field6, convertToMySQLDateTime(entry.created_at)];
+      const values = [entry.entry_id, group_id, entry.field1, entry.field2, entry.field3, entry.field4, entry.field5, entry.field6, convertToMySQLDateTime(entry.created_at)];
       connection.query(query, values, (error, results, fields) => {
         if (error) throw error;
         console.log('Data inserted/updated for entry_id:', entry.entry_id);
@@ -81,9 +87,10 @@ const startScheduler = async () => {
     const fetchDataWithDelay = async () => {
       const currentTime = new Date().toLocaleString();
       console.log(`[${currentTime}] Fetching data...`);
-      await fetchData(connection);
+      await fetchData(connection, 1);
+      await fetchData(connection, 2);
       console.log('Waiting for 1 minute before fetching data again...');
-      setTimeout(fetchDataWithDelay, 5*60*1000); // 5분마다 실행
+      setTimeout(fetchDataWithDelay, 10*60*1000); // 10분마다 실행
     };
 
     // 처음 즉시 실행
