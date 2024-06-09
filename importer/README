@@ -1,3 +1,8 @@
+# 설치
 npm install
-파일 넣고
+# 사용방법
+csv 파일은 xlsx로 변환해서 써야함
+파일명은 export했던거 그대로 쓰면됨
+같은 경로에 파일넣고
 node import.js
+node import2.js
