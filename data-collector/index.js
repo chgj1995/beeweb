@@ -113,7 +113,6 @@ const startScheduler = async () => {
         await fetchAndInsertData(connection, 2);
       }
 
-      console.log('Waiting for 10 minutes before fetching data again...');
       setTimeout(() => fetchDataWithDelay(false), 10 * 60 * 1000); // 10분마다 실행
     };
 

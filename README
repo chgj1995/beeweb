@@ -7,8 +7,11 @@ ufw disable
 # 종료 및 삭제
 sudo docker-compose down -v
 
-# 시작
+# 빌드 및 시작
 sudo docker-compose up --build
 
 # 백그라운드에서 시작
 sudo docker-compose up -d
+
+# 종료
+sudo docker-compose down
