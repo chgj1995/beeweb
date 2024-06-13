@@ -33,6 +33,28 @@ const connectToDatabase = () => {
   });
 };
 
+const insertBatchData = (connection, batch) => {
+  return new Promise((resolve, reject) => {
+    const query = `
+      INSERT INTO inout_data (entry_id, group_id, field1, field2, field3, field4, field5, field6, created_at)
+      VALUES ?
+      ON DUPLICATE KEY UPDATE
+        field1 = VALUES(field1),
+        field2 = VALUES(field2),
+        field3 = VALUES(field3),
+        field4 = VALUES(field4),
+        field5 = VALUES(field5),
+        field6 = VALUES(field6),
+        created_at = VALUES(created_at)
+    `;
+
+    connection.query(query, [batch], (error, results, fields) => {
+      if (error) return reject(error);
+      resolve(results);
+    });
+  });
+};
+
 const fetchAndInsertData = async (connection, group_id, results = 5) => {
   let url = `https://api.thingspeak.com/channels/${process.env[`CHANNEL_ID${group_id}`]}/feeds.json?results=${results}`;
   console.log(`Fetching data from: ${url}`);
@@ -47,20 +69,10 @@ const fetchAndInsertData = async (connection, group_id, results = 5) => {
       return maxEntryId;
     }
 
+    let batch = [];
     let insertedCount = 0;
+
     for (let entry of data) {
-      const query = `
-        INSERT INTO inout_data (entry_id, group_id, field1, field2, field3, field4, field5, field6, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE
-          field1 = VALUES(field1),
-          field2 = VALUES(field2),
-          field3 = VALUES(field3),
-          field4 = VALUES(field4),
-          field5 = VALUES(field5),
-          field6 = VALUES(field6),
-          created_at = VALUES(created_at)
-      `;
       const values = [
         entry.entry_id,
         group_id,
@@ -73,17 +85,21 @@ const fetchAndInsertData = async (connection, group_id, results = 5) => {
         convertToMySQLDateTime(entry.created_at)
       ];
 
-      await new Promise((resolve, reject) => {
-        connection.query(query, values, (error, results, fields) => {
-          if (error) return reject(error);
-          resolve(results);
-        });
-      });
+      batch.push(values);
 
-      insertedCount++;
-      if (insertedCount % 100 === 0) {
+      if (batch.length === 1000) {
+        await insertBatchData(connection, batch);
+        insertedCount += batch.length;
         console.log(`Inserted/updated ${insertedCount} rows`);
+        batch = [];
       }
+    }
+
+    // 남은 데이터 인서트
+    if (batch.length > 0) {
+      await insertBatchData(connection, batch);
+      insertedCount += batch.length;
+      console.log(`Inserted/updated ${insertedCount} rows`);
     }
 
     return maxEntryId;

@@ -1,66 +1,73 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Data Charts</title>
-  <script src="/chart.js/chart.min.js"></script>
-  <script src="/chartjs-adapter-date-fns/chartjs-adapter-date-fns.bundle.min.js"></script>
-  
+  <title>Available Areas and Hives</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
-    .chart-block {
-      margin-bottom: 50px;
+    body {
+      display: flex;
+      flex-direction: row;
+      height: 100vh;
+      margin: 0;
+      font-family: Arial, sans-serif;
     }
-    .chart-block canvas {
-      display: block;
-      margin: 0 auto;
-      height: 500; /* 원하는 높이로 설정 */
+    #map {
+      width: 50%;
+      height: 100%;
+    }
+    #content {
+      width: 50%;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    h1 {
+      text-align: center;
     }
   </style>
 </head>
 <body>
-  <h1>Data Charts</h1>
-  
-  <div class="chart-block" id="hive1">
-    <h2>Hive 1</h2>
-    <canvas id="hive1_io"></canvas>
-    <canvas id="hive1_th"></canvas>
-    <canvas id="hive1_co2"></canvas>
-  </div>
-  
-  <div class="chart-block" id="hive2">
-    <h2>Hive 2</h2>
-    <canvas id="hive2_io"></canvas>
-    <canvas id="hive2_th"></canvas>
-    <canvas id="hive2_co2"></canvas>
+  <div id="map"></div>
+  <div id="content">
+    <h1>Available Areas and Hives</h1>
   </div>
 
-  <div class="chart-block" id="hive3">
-    <h2>Hive 3</h2>
-    <canvas id="hive3_io"></canvas>
-    <canvas id="hive3_th"></canvas>
-    <canvas id="hive3_co2"></canvas>
-  </div>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    // Initialize the map
+    const map = L.map('map').setView([37.5665, 126.9780], 11); // Example coordinates (Seoul)
 
-  <div class="chart-block" id="hive4">
-    <h2>Hive 4</h2>
-    <canvas id="hive4_io"></canvas>
-    <canvas id="hive4_th"></canvas>
-    <canvas id="hive4_co2"></canvas>
-  </div>
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
 
-  <div class="chart-block" id="hive5">
-    <h2>Hive 5</h2>
-    <canvas id="hive5_io"></canvas>
-    <canvas id="hive5_th"></canvas>
-    <canvas id="hive5_co2"></canvas>
-  </div>
+    // Example marker (you can update coordinates as needed)
+    L.marker([37.5665, 126.9780]).addTo(map)
+      .bindPopup('Seoul')
+      .openPopup();
 
-  <div class="chart-block" id="hive6">
-    <h2>Hive 6</h2>
-    <canvas id="hive6_io"></canvas>
-    <canvas id="hive6_th"></canvas>
-    <canvas id="hive6_co2"></canvas>
-  </div>
+    async function fetchAreasAndHives() {
+      const response = await fetch('/api/areas');
+      const data = await response.json();
+      const contentDiv = document.getElementById('content');
 
-  <script src="/scripts/charts.js"></script>
+      Object.keys(data).forEach(areaId => {
+        const areaDiv = document.createElement('div');
+        areaDiv.innerHTML = `<h2>Area ${areaId}</h2>`;
+        
+        const hivesList = document.createElement('ul');
+        data[areaId].forEach(hiveId => {
+          const hiveItem = document.createElement('li');
+          hiveItem.innerHTML = `<a href="/view/${areaId}/hive/${hiveId}">Hive ${hiveId}</a>`;
+          hivesList.appendChild(hiveItem);
+        });
+
+        areaDiv.appendChild(hivesList);
+        contentDiv.appendChild(areaDiv);
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', fetchAreasAndHives);
+  </script>
 </body>
 </html>

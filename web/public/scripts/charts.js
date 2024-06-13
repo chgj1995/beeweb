@@ -1,16 +1,16 @@
-async function fetchInOutData(hive_id) {
-  const url = `/api/get/inout/${hive_id}`;
+async function fetchInOutData(areaId, hiveId) {
+  const url = `/api/get/inout/${areaId}/${hiveId}`;
   const response = await fetch(url);
   const data = await response.json();
-  console.log(`Data received for hive_id ${hive_id}:`, data);
+  console.log(`Data received for area_id ${areaId}, hive_id ${hiveId}:`, data);
   return data;
 }
 
-async function fetchSensorData(hive_id) {
-  const url = `/api/get/sensor/${hive_id}`;
+async function fetchSensorData(areaId, hiveId) {
+  const url = `/api/get/sensor/${areaId}/${hiveId}`;
   const response = await fetch(url);
   const data = await response.json();
-  console.log(`Data received for hive_id ${hive_id}:`, data);
+  console.log(`Data received for area_id ${areaId}, hive_id ${hiveId}:`, data);
   return data;
 }
 
@@ -27,9 +27,9 @@ function createChart(ctx, labels, datasets) {
           type: 'time', // x축을 시간 축으로 설정
           time: {
             unit: 'minute', // 시간 단위를 분으로 설정
-            tooltipFormat: 'yyyy-MM-dd HH:mm:ss', // 툴팁 형식 설정
+            tooltipFormat: 'MM-dd HH:mm', // 툴팁 형식 설정
             displayFormats: {
-              minute: 'yyyy-MM-dd HH:mm:ss' // x축 라벨 형식 설정
+              minute: 'MM-dd HH:mm' // x축 라벨 형식 설정
             }
           },
           title: {
@@ -37,7 +37,9 @@ function createChart(ctx, labels, datasets) {
             text: 'Time'
           },
           ticks: {
-            source: 'auto'
+            source: 'data', // 값이 있는 포인트에만 x축을 표기
+            autoSkip: true,
+            maxTicksLimit: 10 // x축 라벨의 최대 표시 개수
           }
         }
       }
@@ -95,36 +97,34 @@ function createCo2Chart(ctx, time, co2) {
   ]);
 }
 
-async function renderCharts() {
-  console.log('Rendering charts');
-  
-  const hiveIds = [1, 2, 3, 4, 5, 6];
-  const inoutDataPromises = hiveIds.map(id => fetchInOutData(id));
-  const sensorDataPromises = hiveIds.map(id => fetchSensorData(id));
-  
-  const inoutData = await Promise.all(inoutDataPromises);
-  const sensorData = await Promise.all(sensorDataPromises);
-
-  createInOutChart(document.getElementById('hive1_io').getContext('2d'), inoutData[0].created_at, inoutData[0].in, inoutData[0].out);
-  createInOutChart(document.getElementById('hive2_io').getContext('2d'), inoutData[1].created_at, inoutData[1].in, inoutData[1].out);
-  createInOutChart(document.getElementById('hive3_io').getContext('2d'), inoutData[2].created_at, inoutData[2].in, inoutData[2].out);
-  createInOutChart(document.getElementById('hive4_io').getContext('2d'), inoutData[3].created_at, inoutData[3].in, inoutData[3].out);
-  createInOutChart(document.getElementById('hive5_io').getContext('2d'), inoutData[4].created_at, inoutData[4].in, inoutData[4].out);
-  createInOutChart(document.getElementById('hive6_io').getContext('2d'), inoutData[5].created_at, inoutData[5].in, inoutData[5].out);
-
-  createTempHumiChart(document.getElementById('hive1_th').getContext('2d'), sensorData[0].time, sensorData[0].temp, sensorData[0].humi);
-  createTempHumiChart(document.getElementById('hive2_th').getContext('2d'), sensorData[1].time, sensorData[1].temp, sensorData[1].humi);
-  createTempHumiChart(document.getElementById('hive3_th').getContext('2d'), sensorData[2].time, sensorData[2].temp, sensorData[2].humi);
-  createTempHumiChart(document.getElementById('hive4_th').getContext('2d'), sensorData[3].time, sensorData[3].temp, sensorData[3].humi);
-  createTempHumiChart(document.getElementById('hive5_th').getContext('2d'), sensorData[4].time, sensorData[4].temp, sensorData[4].humi);
-  createTempHumiChart(document.getElementById('hive6_th').getContext('2d'), sensorData[5].time, sensorData[5].temp, sensorData[5].humi);
-
-  createCo2Chart(document.getElementById('hive1_co2').getContext('2d'), sensorData[0].time, sensorData[0].co2);
-  createCo2Chart(document.getElementById('hive2_co2').getContext('2d'), sensorData[1].time, sensorData[1].co2);
-  createCo2Chart(document.getElementById('hive3_co2').getContext('2d'), sensorData[2].time, sensorData[2].co2);
-  createCo2Chart(document.getElementById('hive4_co2').getContext('2d'), sensorData[3].time, sensorData[3].co2);
-  createCo2Chart(document.getElementById('hive5_co2').getContext('2d'), sensorData[4].time, sensorData[4].co2);
-  createCo2Chart(document.getElementById('hive6_co2').getContext('2d'), sensorData[5].time, sensorData[5].co2);
+function createWeighChart(ctx, time, weigh) {
+  createChart(ctx, time, [
+    {
+      label: 'weigh',
+      data: weigh,
+      borderColor: 'rgba(75, 192, 192, 1)',
+      backgroundColor: 'rgba(75, 192, 192, 0.2)',
+      fill: true,
+    }
+  ]);
 }
 
-renderCharts();
+async function renderCharts(areaId, hiveId) {
+  console.log('Rendering charts for area', areaId, 'hive', hiveId);
+  
+  const inoutData = await fetchInOutData(areaId, hiveId);
+  const sensorData = await fetchSensorData(areaId, hiveId);
+
+  createInOutChart(document.getElementById('hive_io').getContext('2d'), inoutData.created_at, inoutData.in, inoutData.out);
+  createTempHumiChart(document.getElementById('hive_th').getContext('2d'), sensorData.time, sensorData.temp, sensorData.humi);
+  createCo2Chart(document.getElementById('hive_co2').getContext('2d'), sensorData.time, sensorData.co2);
+  createWeighChart(document.getElementById('hive_weigh').getContext('2d'), sensorData.time, sensorData.weigh);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const pathParts = window.location.pathname.split('/');
+  const areaId = pathParts[2];
+  const hiveId = pathParts[4];
+  document.getElementById('hiveId').textContent = `Area ${areaId}, Hive ${hiveId}`;
+  renderCharts(areaId, hiveId);
+});

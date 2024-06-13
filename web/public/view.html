@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Data Charts</title>
+  <script src="/chart.js/chart.min.js"></script>
+  <script src="/chartjs-adapter-date-fns/chartjs-adapter-date-fns.bundle.min.js"></script>
+  
+  <style>
+    .chart-block {
+      margin-bottom: 50px;
+    }
+    .chart-block canvas {
+      display: block;
+      margin: 0 auto;
+      height: 500px; /* 원하는 높이로 설정 */
+    }
+  </style>
+</head>
+<body>
+  <h1>Data Charts for Area <span id="areaId"></span>, Hive <span id="hiveId"></span></h1>
+  
+  <div class="chart-block">
+    <canvas id="hive_io"></canvas>
+    <canvas id="hive_th"></canvas>
+    <canvas id="hive_co2"></canvas>
+    <canvas id="hive_weigh"></canvas>
+  </div>
+
+  <script src="/scripts/charts.js"></script>
+</body>
+</html>
