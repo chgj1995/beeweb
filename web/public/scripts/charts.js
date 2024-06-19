@@ -125,6 +125,6 @@ document.addEventListener('DOMContentLoaded', function() {
   const pathParts = window.location.pathname.split('/');
   const areaId = pathParts[2];
   const hiveId = pathParts[4];
-  document.getElementById('hiveId').textContent = `Area ${areaId}, Hive ${hiveId}`;
+  // document.getElementById('hiveId').textContent = `Area ${areaId}, Hive ${hiveId}`;
   renderCharts(areaId, hiveId);
 });

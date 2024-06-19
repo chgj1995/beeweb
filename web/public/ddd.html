@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>honey bee main</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="styles.css">
     <script src="/chart.js/chart.min.js"></script>
     <script src="/chartjs-adapter-date-fns/chartjs-adapter-date-fns.bundle.min.js"></script>
 </head>
@@ -42,8 +42,8 @@
         <p>&copy; <class="nanum-gothic-regular>Wireless Communication LAB, Dept of Embedded System Engineering, Incheon National University</p>
     </footer>
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <script src="/scripts/scripts.js"></script>
-    <script src="/scripts/charts.js"></script>
+    <script src="scripts.js"></script>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
         // Initialize the map
         const map = L.map('map').setView([37.5665, 126.9780], 11); // Example coordinates (Seoul)
@@ -76,42 +76,42 @@
             }
         }
          // Chart.js initialization
-        // const ctx_io = document.getElementById('hive_io').getContext('2d');
-        // const ctx_th = document.getElementById('hive_th').getContext('2d');
-        // const ctx_co2 = document.getElementById('hive_co2').getContext('2d');
-        // const ctx_weigh = document.getElementById('hive_weigh').getContext('2d');
+         const ctx_io = document.getElementById('hive_io').getContext('2d');
+        const ctx_th = document.getElementById('hive_th').getContext('2d');
+        const ctx_co2 = document.getElementById('hive_co2').getContext('2d');
+        const ctx_weigh = document.getElementById('hive_weigh').getContext('2d');
 
-        // const chartConfig = {
-        //     type: 'line', // 차트 유형
-        //     data: {
-        //         labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'], // x축 데이터
-        //         datasets: [{
-        //             label: 'Sample Data',
-        //             data: [65, 59, 80, 81, 56, 55, 40], // y축 데이터
-        //             fill: false,
-        //             borderColor: 'rgb(75, 192, 192)',
-        //             tension: 0.1
-        //         }]
-        //     },
-        //     options: {
-        //         scales: {
-        //             x: {
-        //                 type: 'time',
-        //                 time: {
-        //                     unit: 'month'
-        //                 }
-        //             },
-        //             y: {
-        //                 beginAtZero: true
-        //             }
-        //         }
-        //     }
-        // };
+        const chartConfig = {
+            type: 'line', // 차트 유형
+            data: {
+                labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'], // x축 데이터
+                datasets: [{
+                    label: 'Sample Data',
+                    data: [65, 59, 80, 81, 56, 55, 40], // y축 데이터
+                    fill: false,
+                    borderColor: 'rgb(75, 192, 192)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: {
+                            unit: 'month'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        };
 
-        // new Chart(ctx_io, chartConfig);
-        // new Chart(ctx_th, chartConfig);
-        // new Chart(ctx_co2, chartConfig);
-        // new Chart(ctx_weigh, chartConfig);
+        new Chart(ctx_io, chartConfig);
+        new Chart(ctx_th, chartConfig);
+        new Chart(ctx_co2, chartConfig);
+        new Chart(ctx_weigh, chartConfig);
     </script>
 </body>
 </html>
