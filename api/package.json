@@ -1,0 +1,16 @@
+{
+  "name": "express-api-server",
+  "version": "1.0.0",
+  "description": "An Express server for handling API requests and connecting to a MySQL database",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1",
+    "mysql": "^2.18.1"
+  }
+}

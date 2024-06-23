@@ -1,4 +1,3 @@
-const mysql = require('mysql');
 const axios = require('axios');
 
 console.log('Starting the data collector script...');
@@ -8,54 +7,35 @@ function convertToMySQLDateTime(isoDate) {
   return isoDate.replace('T', ' ').substring(0, 19);
 }
 
-const connectToDatabase = () => {
-  return new Promise((resolve, reject) => {
-    const connection = mysql.createConnection({
-      host: process.env.DB_HOST,
-      user: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_NAME
-    });
+// Register Hive and Device if not already present
+const registerHiveAndDevice = async (hiveId) => {
+  try {
+    const responseHive = await axios.post('http://172.17.0.1:8090/api/hive', { areaId: 1, name: `Hive ${hiveId}` });
+    const hiveDbId = responseHive.data.hiveId;
 
-    const attemptConnection = () => {
-      connection.connect((err) => {
-        if (err) {
-          console.error('Error connecting to the database:', err);
-          setTimeout(attemptConnection, 5000); // 5초 후에 다시 시도
-        } else {
-          console.log('Connected to the database');
-          resolve(connection);
-        }
-      });
-    };
-
-    attemptConnection();
-  });
+    const responseDevice = await axios.post('http://172.17.0.1:8090/api/device', { hiveId: hiveDbId, typeId: 3 });
+    return responseDevice.data.deviceId;
+  } catch (error) {
+    console.error('Error registering hive or device:', error.response ? error.response.data : error.message);
+    throw error;
+  }
 };
 
-const insertBatchData = (connection, batch) => {
-  return new Promise((resolve, reject) => {
-    const query = `
-      INSERT INTO inout_data (entry_id, group_id, field1, field2, field3, field4, field5, field6, created_at)
-      VALUES ?
-      ON DUPLICATE KEY UPDATE
-        field1 = VALUES(field1),
-        field2 = VALUES(field2),
-        field3 = VALUES(field3),
-        field4 = VALUES(field4),
-        field5 = VALUES(field5),
-        field6 = VALUES(field6),
-        created_at = VALUES(created_at)
-    `;
-
-    connection.query(query, [batch], (error, results, fields) => {
-      if (error) return reject(error);
-      resolve(results);
+// Send batch data to inout API
+const sendInOutDataBatch = async (batch) => {
+  try {
+    await axios.post('http://172.17.0.1:8090/api/upload', {
+      type: 3,
+      data: batch
     });
-  });
+  } catch (error) {
+    console.error('Error sending inout data:', error.response ? error.response.data : error.message);
+    throw error;
+  }
 };
 
-const fetchAndInsertData = async (connection, group_id, results = 5) => {
+// Fetch data from Thingspeak and insert into inout_data
+const fetchAndInsertData = async (group_id, results = 5) => {
   let url = `https://api.thingspeak.com/channels/${process.env[`CHANNEL_ID${group_id}`]}/feeds.json?results=${results}`;
   console.log(`Fetching data from: ${url}`);
   
@@ -66,43 +46,49 @@ const fetchAndInsertData = async (connection, group_id, results = 5) => {
 
     if (!data || data.length === 0) {
       console.log('No data found in the response.');
-      return maxEntryId;
+      return { maxEntryId, newEntryIds: [] };
     }
 
     let batch = [];
-    let insertedCount = 0;
+    let newEntryIds = [];
+
+    // Register Hives and Devices
+    const hiveDeviceMap = {};
+    const hiveIds = group_id === 1 ? [1, 2, 3] : [4, 5, 6];
+    for (const hiveId of hiveIds) {
+      hiveDeviceMap[hiveId] = await registerHiveAndDevice(hiveId);
+    }
 
     for (let entry of data) {
-      const values = [
-        entry.entry_id,
-        group_id,
-        entry.field1,
-        entry.field2,
-        entry.field3,
-        entry.field4,
-        entry.field5,
-        entry.field6,
-        convertToMySQLDateTime(entry.created_at)
+      const time = convertToMySQLDateTime(entry.created_at);
+      const fields = [
+        { hiveId: hiveIds[0], inField: entry.field1, outField: entry.field2 },
+        { hiveId: hiveIds[1], inField: entry.field3, outField: entry.field4 },
+        { hiveId: hiveIds[2], inField: entry.field5, outField: entry.field6 }
       ];
 
-      batch.push(values);
+      fields.forEach(field => {
+        if (field.inField != null || field.outField != null) {
+          batch.push({ id: hiveDeviceMap[field.hiveId], time, inField: field.inField || 0, outField: field.outField || 0 });
+        }
+      });
 
-      if (batch.length === 1000) {
-        await insertBatchData(connection, batch);
-        insertedCount += batch.length;
-        console.log(`Inserted/updated ${insertedCount} rows`);
+      newEntryIds.push(entry.entry_id);
+
+      if (batch.length >= 1000) {
+        await sendInOutDataBatch(batch);
+        console.log(`Processed ${batch.length} rows of inout data`);
         batch = [];
       }
     }
 
-    // 남은 데이터 인서트
+    // Send remaining batch
     if (batch.length > 0) {
-      await insertBatchData(connection, batch);
-      insertedCount += batch.length;
-      console.log(`Inserted/updated ${insertedCount} rows`);
+      await sendInOutDataBatch(batch);
+      console.log(`Processed remaining ${batch.length} rows of inout data`);
     }
 
-    return maxEntryId;
+    return { maxEntryId, newEntryIds };
   } catch (error) {
     console.error('Error fetching data:', error);
     if (error.response) {
@@ -111,33 +97,30 @@ const fetchAndInsertData = async (connection, group_id, results = 5) => {
   }
 };
 
+// Scheduler to periodically fetch data
 const startScheduler = async () => {
+  console.log('Scheduler started. Fetching data immediately...');
   try {
-    console.log('Connecting to the database...');
-    const connection = await connectToDatabase();
-    console.log('Scheduler started. Fetching data immediately...');
-
     const fetchDataWithDelay = async (isInitial = false) => {
       const currentTime = new Date().toLocaleString();
       console.log(`[${currentTime}] Fetching data...`);
 
+      let result1, result2;
+
       if (isInitial) {
-        await fetchAndInsertData(connection, 1, 8000);
-        await fetchAndInsertData(connection, 2, 8000);
+        result1 = await fetchAndInsertData(1, 8000);
+        result2 = await fetchAndInsertData(2, 8000);
       } else {
-        await fetchAndInsertData(connection, 1);
-        await fetchAndInsertData(connection, 2);
+        result1 = await fetchAndInsertData(1);
+        result2 = await fetchAndInsertData(2);
       }
 
       setTimeout(() => fetchDataWithDelay(false), 10 * 60 * 1000); // 10분마다 실행
     };
 
-    // 초기 실행에서는 8000개 데이터를 가져옴
     await fetchDataWithDelay(true);
-
-    // 이후에는 5개 데이터를 주기적으로 가져옴
   } catch (error) {
-    console.error('Failed to connect to the database:', error);
+    console.error('Failed to start scheduler:', error);
   }
 };
 

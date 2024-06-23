@@ -1,14 +1,17 @@
-# Use the official MariaDB image from the Docker Hub
+# Docker Hub에서 공식 MariaDB 이미지를 사용
 FROM mariadb:latest
 
-# Set environment variables for MariaDB
+# MariaDB 환경 변수 설정
 ENV MYSQL_ROOT_PASSWORD=rootpassword
 ENV MYSQL_DATABASE=hive_data
 ENV MYSQL_USER=user
 ENV MYSQL_PASSWORD=password
 
-# Copy the initialization script to the Docker entrypoint directory
+# 초기화 스크립트를 Docker entrypoint 디렉토리에 복사
 COPY init.sql /docker-entrypoint-initdb.d/
 
-# Expose the default MariaDB port
+# 커스텀 MariaDB 구성 파일 복사
+COPY custom-mariadb.cnf /etc/mysql/conf.d/
+
+# 기본 MariaDB 포트 노출
 EXPOSE 3306
