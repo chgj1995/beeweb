@@ -39,13 +39,13 @@ app.get('/api/areahive', async (req, res) => {
 // =============================
 // GET 요청을 처리하여 데이터 반환
 app.get('/api/inout', async (req, res) => {
-  const { deviceID, sTime, eTime } = req.query;
-  if (!deviceID || !sTime || !eTime) {
+  const { deviceId, sTime, eTime } = req.query;
+  if (!deviceId || !sTime || !eTime) {
     return res.status(400).send('Bad Request: Missing required fields');
   }
 
   try {
-    const data = await database.getInOutDataByDeviceAndTimeRange(dbConnection, deviceID, sTime, eTime);
+    const data = await database.getInOutDataByDeviceAndTimeRange(dbConnection, deviceId, sTime, eTime);
     res.json(data);
   } catch (error) {
     console.error('Error fetching inout data:', error);
@@ -58,13 +58,13 @@ app.get('/api/inout', async (req, res) => {
 // =============================
 // GET 요청을 처리하여 데이터 반환
 app.get('/api/sensor', async (req, res) => {
-  const { deviceID, sTime, eTime } = req.query;
-  if (!deviceID || !sTime || !eTime) {
+  const { deviceId, sTime, eTime } = req.query;
+  if (!deviceId || !sTime || !eTime) {
     return res.status(400).send('Bad Request: Missing required fields');
   }
 
   try {
-    const data = await database.getSensorDataByDeviceAndTimeRange(dbConnection, deviceID, sTime, eTime);
+    const data = await database.getSensorDataByDeviceAndTimeRange(dbConnection, deviceId, sTime, eTime);
     res.json(data);
   } catch (error) {
     console.error('Error fetching sensor data:', error);
@@ -100,7 +100,7 @@ app.post('/api/uplink', async (req, res) => {
     // DB에 있는지 확인
     const deviceResults = await database.checkDevice(dbConnection, id, type);
     if (deviceResults.length === 0) {
-      return res.status(400).send('Bad Request: Invalid device ID or type');
+      return res.status(400).send('Bad Request: Invalid device Id or type');
     }
 
     const time = new Date().toISOString().slice(0, 19).replace('T', ' '); // 현재 시간 설정
@@ -154,7 +154,7 @@ app.post('/api/upload', async (req, res) => {
 });
 
 // =============================
-// HIVE 추가
+// HIVE
 // =============================
 
 app.post('/api/hive', async (req, res) => {
@@ -174,8 +174,23 @@ app.post('/api/hive', async (req, res) => {
 });
 
 // =============================
-// DEVICE 추가
+// DEVICE
 // =============================
+app.get('/api/device', async (req, res) => {
+  const { hiveId } = req.query;
+
+  if (!hiveId) {
+    return res.status(400).send('Bad Request: Missing hiveId');
+  }
+
+  try {
+    const devices = await database.getDevicesByHiveId(dbConnection, hiveId);
+    res.status(200).json(devices);
+  } catch (error) {
+    console.error('Error fetching devices:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
 
 app.post('/api/device', async (req, res) => {
   const { hiveId, typeId } = req.body;
