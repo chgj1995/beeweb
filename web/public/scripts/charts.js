@@ -1,16 +1,16 @@
-async function fetchInOutData(areaId, hiveId) {
-  const url = `/api/get/inout/${areaId}/${hiveId}`;
+async function fetchInOutData(area, hive) {
+  const url = `/honeybee/api/get?type=inout&area=${area}&hive=${hive}`;
   const response = await fetch(url);
   const data = await response.json();
-  console.log(`Data received for area_id ${areaId}, hive_id ${hiveId}:`, data);
+  console.log(`Data received for area ${area}, hive ${hive}:`, data);
   return data;
 }
 
-async function fetchSensorData(areaId, hiveId) {
-  const url = `/api/get/sensor/${areaId}/${hiveId}`;
+async function fetchSensorData(area, hive) {
+  const url = `/honeybee/api/get?type=sensor&area=${area}&hive=${hive}`;
   const response = await fetch(url);
   const data = await response.json();
-  console.log(`Data received for area_id ${areaId}, hive_id ${hiveId}:`, data);
+  console.log(`Data received for area ${area}, hive ${hive}:`, data);
   return data;
 }
 
@@ -24,12 +24,12 @@ function createChart(ctx, labels, datasets) {
     options: {
       scales: {
         x: {
-          type: 'time', // x축을 시간 축으로 설정
+          type: 'time',
           time: {
-            unit: 'minute', // 시간 단위를 분으로 설정
-            tooltipFormat: 'MM-dd HH:mm', // 툴팁 형식 설정
+            unit: 'minute',
+            tooltipFormat: 'MM-dd HH:mm',
             displayFormats: {
-              minute: 'MM-dd HH:mm' // x축 라벨 형식 설정
+              minute: 'MM-dd HH:mm'
             }
           },
           title: {
@@ -37,9 +37,9 @@ function createChart(ctx, labels, datasets) {
             text: 'Time'
           },
           ticks: {
-            source: 'data', // 값이 있는 포인트에만 x축을 표기
+            source: 'data',
             autoSkip: true,
-            maxTicksLimit: 10 // x축 라벨의 최대 표시 개수
+            maxTicksLimit: 10
           }
         }
       }
@@ -109,11 +109,11 @@ function createWeighChart(ctx, time, weigh) {
   ]);
 }
 
-async function renderCharts(areaId, hiveId) {
-  console.log('Rendering charts for area', areaId, 'hive', hiveId);
+async function renderCharts(area, hive) {
+  console.log('Rendering charts for area', area, 'hive', hive);
   
-  const inoutData = await fetchInOutData(areaId, hiveId);
-  const sensorData = await fetchSensorData(areaId, hiveId);
+  const inoutData = await fetchInOutData(area, hive);
+  const sensorData = await fetchSensorData(area, hive);
 
   createInOutChart(document.getElementById('hive_io').getContext('2d'), inoutData.created_at, inoutData.in, inoutData.out);
   createTempHumiChart(document.getElementById('hive_th').getContext('2d'), sensorData.time, sensorData.temp, sensorData.humi);
@@ -122,9 +122,13 @@ async function renderCharts(areaId, hiveId) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-  const pathParts = window.location.pathname.split('/');
-  const areaId = pathParts[2];
-  const hiveId = pathParts[4];
-  // document.getElementById('hiveId').textContent = `Area ${areaId}, Hive ${hiveId}`;
-  renderCharts(areaId, hiveId);
+  const params = new URLSearchParams(window.location.search);
+  const area = params.get('area');
+  const hive = params.get('hive');
+
+  if (area && hive) {
+    renderCharts(area, hive);
+  } else {
+    console.error('Area and hive query parameters are required');
+  }
 });

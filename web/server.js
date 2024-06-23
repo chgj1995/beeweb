@@ -6,11 +6,11 @@ const app = express();
 const port = 80;
 
 // Serve static files from the 'public' directory
-app.use(express.static('public'));
+app.use('/honeybee', express.static(path.join(__dirname, 'public')));
 
 // Serve Chart.js from node_modules
-app.use('/chart.js', express.static(path.join(__dirname, 'node_modules/chart.js/dist')));
-app.use('/chartjs-adapter-date-fns', express.static(path.join(__dirname, 'node_modules/chartjs-adapter-date-fns/dist')));
+app.use('/honeybee/chart.js', express.static(path.join(__dirname, 'node_modules/chart.js/dist')));
+app.use('/honeybee/chartjs-adapter-date-fns', express.static(path.join(__dirname, 'node_modules/chartjs-adapter-date-fns/dist')));
 
 const dbConfig = {
   host: process.env.DB_HOST,
@@ -41,32 +41,32 @@ const connectToDatabase = () => {
 
 const createApiHandler = (connection) => {
   return async (req, res) => {
-    const { type, areaId, hiveId } = req.params;
-    console.log(`Received request for /api/get/${type}/${areaId}/${hiveId}`);
+    const { type, area, hive } = req.query;
+    console.log(`Received request for /api/get/${type}?area=${area}&hive=${hive}`);
     try {
       let data;
       if (type === 'inout') {
-        data = await fetchInOutData(connection, areaId, hiveId);
+        data = await fetchInOutData(connection, area, hive);
       } else if (type === 'sensor') {
-        data = await fetchSensorData(connection, areaId, hiveId);
+        data = await fetchSensorData(connection, area, hive);
       } else {
         return res.status(400).send('Invalid request type');
       }
       res.json(data);
     } catch (error) {
-      console.error(`Error fetching data for ${type}/${areaId}/${hiveId}:`, error);
+      console.error(`Error fetching data for ${type}?area=${area}&hive=${hive}:`, error);
       res.status(500).send('Internal Server Error');
     }
   };
 };
 
-// Route to serve the HTML view
-app.get('/view/:areaId/hive/:hiveId', (req, res) => {
+// Route to serve the HTML view with query parameters
+app.get('/honeybee/view', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'view.html'));
 });
 
 // Route to serve the index page
-app.get('/api/areas', async (req, res) => {
+app.get('/honeybee/api/areas', async (req, res) => {
   try {
     const connection = await connectToDatabase();
     const areas = await fetchAreasAndHives(connection);
@@ -78,13 +78,13 @@ app.get('/api/areas', async (req, res) => {
   }
 });
 
-app.get('/', (req, res) => {
+app.get('/honeybee', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 connectToDatabase()
   .then(connection => {
-    app.get('/api/get/:type/:areaId/:hiveId', createApiHandler(connection));
+    app.get('/honeybee/api/get', createApiHandler(connection));
     app.listen(port, () => {
       console.log(`Server is running on port ${port}`);
     });
