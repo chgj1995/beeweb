@@ -15,23 +15,25 @@ app.use('/honeybee', express.static(path.join(__dirname, 'public')));
 app.use('/honeybee/chart.js', express.static(path.join(__dirname, 'node_modules/chart.js/dist')));
 app.use('/honeybee/chartjs-adapter-date-fns', express.static(path.join(__dirname, 'node_modules/chartjs-adapter-date-fns/dist')));
 
+// Create a router for /honeybee
+const honeybeeRouter = express.Router();
+
 // Route to serve the HTML view with query parameters
-app.get('/honeybee/view', (req, res) => {
+honeybeeRouter.get('/view', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'view.html'));
 });
 
 // Route to serve the index page
-app.get('/honeybee', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+honeybeeRouter.get('/', (req, res) => {
+  res.redirect('/honeybee/view');
 });
 
 // Proxy API requests to the backend API
-app.use('/honeybee/api', async (req, res) => {
+honeybeeRouter.use('/api', async (req, res) => {
   const url = `${API_BASE_URL}${req.originalUrl.replace('/honeybee/api', '')}`;
   console.log(`Proxying request to ${url}`);
   
   try {
-
     const headers = { ...req.headers };
     // 캐시 관련 헤더 제거
     delete headers['if-modified-since'];
@@ -53,6 +55,9 @@ app.use('/honeybee/api', async (req, res) => {
     }
   }
 });
+
+// Use /honeybee as the base path for the honeybeeRouter
+app.use('/honeybee', honeybeeRouter);
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);

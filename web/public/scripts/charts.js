@@ -41,9 +41,9 @@ function createChart(ctx, labels, datasets) {
           type: 'time',
           time: {
             unit: 'minute',
-            tooltipFormat: 'MM-dd HH:mm',
+            tooltipFormat: 'MM-dd',
             displayFormats: {
-              minute: 'MM-dd HH:mm'
+              minute: 'MM-dd'
             }
           },
           title: {
@@ -57,7 +57,8 @@ function createChart(ctx, labels, datasets) {
           }
         }
       },
-      responsive: false
+      responsive: false,
+      maintainAspectRatio: false,
     }
   });
 }
@@ -150,10 +151,10 @@ async function fetchAndRenderCharts(urlParams) {
 
   if (!sTime || !eTime) {
     const now = new Date();
-    const oneMonthAgo = new Date();
-    oneMonthAgo.setMonth(now.getMonth() - 1);
+    const twoMonthAgo = new Date();
+    twoMonthAgo.setMonth(now.getMonth() - 2);
   
-    const defaultSTime = oneMonthAgo.toISOString().slice(0, 19).replace('T', ' ');
+    const defaultSTime = twoMonthAgo.toISOString().slice(0, 19).replace('T', ' ');
     const defaultETime = now.toISOString().slice(0, 19).replace('T', ' ');
     
     sTime = sTime || defaultSTime;

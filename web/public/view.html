@@ -30,10 +30,10 @@
         </div>
         <div class="right">
             <div class="chart-block">
-                <canvas id="hive_io" width="400" height="200"></canvas>
-                <canvas id="hive_th" width="400" height="200"></canvas>
-                <canvas id="hive_co2" width="400" height="200"></canvas>
-                <canvas id="hive_weigh" width="400" height="200"></canvas>
+                <canvas id="hive_io" style="width: 100%; height: 400px;"></canvas>
+                <canvas id="hive_th" style="width: 100%; height: 400px;"></canvas>
+                <canvas id="hive_co2" style="width: 100%; height: 400px;"></canvas>
+                <canvas id="hive_weigh" style="width: 100%; height: 400px;"></canvas>
             </div>
         </div>
     </div>
@@ -41,27 +41,34 @@
         <p>&copy; <span class="nanum-gothic-regular">Wireless Communication LAB, Dept of Embedded System Engineering, Incheon National University</span></p>
     </footer>
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <script src="/honeybee/scripts/scripts.js"></script>
-    <script src="/honeybee/scripts/charts.js"></script>
     <script>
-        // Initialize the map
-        const map = L.map('map').setView([37.5665, 126.9780], 11); // Example coordinates (Seoul)
-
+        // Initialize the map with dragging disabled
+        const map = L.map('map', {
+            dragging: false, // 드래그 비활성화
+            // zoomControl: false, // 줌 컨트롤 비활성화
+            scrollWheelZoom: false, // 스크롤 휠 줌 비활성화
+            doubleClickZoom: false, // 더블 클릭 줌 비활성화
+            boxZoom: false, // 박스 줌 비활성화
+            keyboard: false, // 키보드 제어 비활성화
+        }).setView([37.5665, 126.9780], 11); // Example coordinates (Seoul)
+        
+        window.map = map;
+        
         // Add OpenStreetMap tiles
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
-
+    
         // Example marker (you can update coordinates as needed)
         L.marker([37.5665, 126.9780]).addTo(map)
           .bindPopup('Seoul')
           .openPopup();
-
+    
         // Dropdown toggle function
         function toggleDropdown(dropdownId) {
             document.getElementById(dropdownId).classList.toggle("show");
         }
-
+    
         // Close the dropdown if the user clicks outside of it
         window.onclick = function(event) {
             if (!event.target.matches('#areaButton')) {
@@ -74,7 +81,9 @@
                 }
             }
         }
-
+    
     </script>
+    <script src="/honeybee/scripts/scripts.js"></script>
+    <script src="/honeybee/scripts/charts.js"></script>
 </body>
 </html>
