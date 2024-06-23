@@ -1,15 +1,28 @@
 const xlsx = require('xlsx');
-const mysql = require('mysql');
+const axios = require('axios');
 const path = require('path');
 const fs = require('fs');
 
-// MariaDB 연결 설정
-const connectionConfig = {
-  host: '127.0.0.1',
-  user: 'user',
-  password: 'password',
-  database: 'hive_data',
-  connectTimeout: 10000  // 10초로 타임아웃 시간 설정
+const API_URL = 'http://localhost:8090'; // API 기본 URL
+
+const registerHive = async (areaId, hiveId) => {
+  try {
+    const response = await axios.post(`${API_URL}/api/hive`, { areaId, name: `Hive ${hiveId}` });
+    return response.data.hiveId;
+  } catch (error) {
+    console.error('Error registering hive:', error.response ? error.response.data : error.message);
+    throw error;
+  }
+};
+
+const registerDevice = async (hiveId) => {
+  try {
+    const response = await axios.post(`${API_URL}/api/device`, { hiveId, typeId: 2 });
+    return response.data.deviceId;
+  } catch (error) {
+    console.error('Error registering device:', error.response ? error.response.data : error.message);
+    throw error;
+  }
 };
 
 const processFile = async (filePath, areaId) => {
@@ -24,19 +37,9 @@ const processFile = async (filePath, areaId) => {
   }
 
   try {
-    // 데이터베이스 연결
-    const connection = mysql.createConnection(connectionConfig);
-    await new Promise((resolve, reject) => {
-      connection.connect((err) => {
-        if (err) {
-          console.error('Error connecting to the database:', err);
-          reject(err);
-        } else {
-          console.log('Connected to the database');
-          resolve();
-        }
-      });
-    });
+    // Hive 및 Device 등록
+    const hiveDbId = await registerHive(areaId, hiveId);
+    const deviceId = await registerDevice(hiveDbId);
 
     // 엑셀 파일 읽기
     const workbook = xlsx.readFile(filePath);
@@ -46,74 +49,43 @@ const processFile = async (filePath, areaId) => {
     const data = xlsx.utils.sheet_to_json(sheet, { header: 1 });
     const totalRows = data.length - 2; // 헤더를 제외한 전체 행 수
 
-    const query = `
-      INSERT INTO sensor_data (data_id, hive_id, area_id, temp, humi, co2, weigh, time)
-      VALUES ?
-      ON DUPLICATE KEY UPDATE
-        temp = VALUES(temp),
-        humi = VALUES(humi),
-        co2 = VALUES(co2),
-        time = VALUES(time),
-        weigh = VALUES(weigh);
-    `;
-
-    let batch = [];
+    let sensorBatch = [];
     let currentRow = 0;
 
     for (let i = 2; i < data.length; i++) { // 두 번째 행까지 헤더이므로 건너뜀
       const row = data[i];
-      const [time, temp, humi, co2, unused1, unused2, unused3, weigh] = row;
-      const dataId = i - 1; // data_id는 행 번호-1 로 설정
+      const [time, temp, humi, co2, , , , weigh] = row;  // 필요한 데이터만 사용
 
-      batch.push([dataId, hiveId, areaId, temp, humi, co2, weigh, time]);
+      sensorBatch.push({ id: deviceId, time, temp, humi, co2, weigh });
       currentRow++;
 
-      // 100개씩 묶어서 배치 인서트
-      if (batch.length === 1000) {
-        await new Promise((resolve, reject) => {
-          connection.query(query, [batch], (error, results) => {
-            if (error) {
-              console.error('Error inserting data for file:', fileName, error);
-              reject(error);
-            } else {
-              console.log(`Processed ${currentRow}/${totalRows} rows for file: ${fileName}`);
-              resolve();
-            }
-          });
-        });
-        batch = []; // 배치를 초기화
+      // 1000개씩 묶어서 HTTP POST 요청
+      if (sensorBatch.length === 1000) {
+        await sendBatch(sensorBatch);
+        console.log(`Processed ${currentRow}/${totalRows} sensor rows for file: ${fileName}`);
+        sensorBatch = [];
       }
     }
 
-    // 남은 데이터 인서트
-    if (batch.length > 0) {
-      await new Promise((resolve, reject) => {
-        connection.query(query, [batch], (error, results) => {
-          if (error) {
-            console.error('Error inserting data for file:', fileName, error);
-            reject(error);
-          } else {
-            console.log(`Processed ${currentRow}/${totalRows} rows for file: ${fileName}`);
-            resolve();
-          }
-        });
-      });
+    // 남은 데이터 HTTP POST 요청
+    if (sensorBatch.length > 0) {
+      await sendBatch(sensorBatch);
+      console.log(`Processed ${currentRow}/${totalRows} sensor rows for file: ${fileName}`);
     }
-
-    // 데이터베이스 연결 종료
-    await new Promise((resolve, reject) => {
-      connection.end((err) => {
-        if (err) {
-          console.error('Error disconnecting from the database:', err);
-          reject(err);
-        } else {
-          console.log('Disconnected from the database');
-          resolve();
-        }
-      });
-    });
   } catch (error) {
     console.error(`Error processing file: ${filePath}`, error);
+  }
+};
+
+const sendBatch = async (batch) => {
+  try {
+    await axios.post(`${API_URL}/api/upload`, {
+      type: 2,
+      data: batch
+    });
+  } catch (error) {
+    console.error('Error sending batch:', error.response ? error.response.data : error.message);
+    throw error;
   }
 };
 
@@ -125,24 +97,30 @@ const folders = fs.readdirSync(currentDir).filter(folder => folder.startsWith('#
 console.log('Found folders:', folders);
 
 const processAllFiles = async () => {
-  for (const folder of folders) {
-    const areaIdMatch = folder.match(/#(\d+)\./);
-    const areaId = areaIdMatch ? parseInt(areaIdMatch[1], 10) : null;
+  try {
+    for (const folder of folders) {
+      const areaIdMatch = folder.match(/#(\d+)\./);
+      const areaId = areaIdMatch ? parseInt(areaIdMatch[1], 10) : null;
 
-    if (areaId !== null) {
-      const folderPath = path.join(currentDir, folder);
-      const files = fs.readdirSync(folderPath).filter(file => file.endsWith('.xlsx') && file.includes('['));
+      if (areaId !== null) {
+        const folderPath = path.join(currentDir, folder);
+        const files = fs.readdirSync(folderPath).filter(file => file.endsWith('.xlsx') && file.includes('['));
 
-      console.log(`Found files in folder ${folder}:`, files);
+        console.log(`Found files in folder ${folder}:`, files);
 
-      for (const file of files) {
-        const filePath = path.join(folderPath, file);
-        await processFile(filePath, areaId);
+        for (const file of files) {
+          const filePath = path.join(folderPath, file);
+          await processFile(filePath, areaId);
+        }
+      } else {
+        console.error(`Error: Area ID not found in the folder name: ${folder}`);
       }
-    } else {
-      console.error(`Error: Area ID not found in the folder name: ${folder}`);
     }
+  } catch (error) {
+    console.error('Error processing files:', error);
   }
 };
 
-processAllFiles();
+processAllFiles().catch((err) => {
+  console.error('Error processing files:', err);
+});
