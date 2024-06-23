@@ -23,10 +23,6 @@ services:
     depends_on:
       - mariadb
     environment:
-      DB_HOST: mariadb
-      DB_USER: user
-      DB_PASSWORD: password
-      DB_NAME: hive_data
       CHANNEL_ID1: ${CHANNEL_ID1}
       CHANNEL_ID2: ${CHANNEL_ID2}
     restart: always

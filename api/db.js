@@ -125,33 +125,19 @@ const getInOutDataByDeviceAndTimeRange = (connection, deviceID, sTime, eTime) =>
 const insertInOutData = async (connection, data) => {
     const batchSize = 1000;
     let processedCount = 0;
+    let totalProcessedCount = 0;
     let batch = [];
 
-    for (let i = 0; i < data.length; i++) {
-        batch.push([data[i].id, data[i].time, data[i].inField, data[i].outField]);
-
-        if (batch.length === batchSize) {
-            await new Promise((resolve, reject) => {
-                const query = 'INSERT INTO inout_data (device_id, time, in_field, out_field) VALUES ?';
-                connection.query(query, [batch], (error, results) => {
-                    if (error) {
-                        console.error('Error inserting inout data:', error);
-                        return reject(error);
-                    }
-                    resolve(results);
-                });
-            });
-
-            processedCount += batch.length;
-            console.log(`Inserted ${processedCount} rows of inout data`);
-            batch = []; // Clear the batch after processing
-        }
-    }
-
-    // Insert remaining data
-    if (batch.length > 0) {
+    const insertBatch = async (batch) => {
         await new Promise((resolve, reject) => {
-            const query = 'INSERT INTO inout_data (device_id, time, in_field, out_field) VALUES ?';
+            const query = `
+                INSERT INTO inout_data (device_id, time, in_field, out_field)
+                VALUES ?
+                ON DUPLICATE KEY UPDATE
+                    in_field = VALUES(in_field),
+                    out_field = VALUES(out_field),
+                    time = VALUES(time)
+            `;
             connection.query(query, [batch], (error, results) => {
                 if (error) {
                     console.error('Error inserting inout data:', error);
@@ -160,13 +146,29 @@ const insertInOutData = async (connection, data) => {
                 resolve(results);
             });
         });
-
         processedCount += batch.length;
-        console.log(`Inserted ${processedCount} rows of inout data`);
+        totalProcessedCount += batch.length;
+        console.log(`Inserted/Updated ${processedCount} rows of inout data`);
+        processedCount = 0;
+    };
+
+    for (let i = 0; i < data.length; i++) {
+        batch.push([data[i].id, data[i].time, data[i].inField, data[i].outField]);
+
+        if (batch.length === batchSize) {
+            await insertBatch(batch);
+            batch = []; // Clear the batch after processing
+        }
     }
 
-    console.log(`Finished inserting a total of ${processedCount} rows of inout data`);
+    // Insert remaining data
+    if (batch.length > 0) {
+        await insertBatch(batch);
+    }
+
+    console.log(`Finished inserting/updating a total of ${totalProcessedCount} rows of inout data`);
 };
+
 
 // =============================
 // SENSOR
@@ -193,33 +195,21 @@ const getSensorDataByDeviceAndTimeRange = (connection, deviceID, sTime, eTime) =
 const insertSensorData = async (connection, data) => {
     const batchSize = 1000;
     let processedCount = 0;
+    let totalProcessedCount = 0;
     let batch = [];
 
-    for (let i = 0; i < data.length; i++) {
-        batch.push([data[i].id, data[i].time, data[i].temp, data[i].humi, data[i].co2, data[i].weigh]);
-
-        if (batch.length === batchSize) {
-            await new Promise((resolve, reject) => {
-                const query = 'INSERT INTO sensor_data (device_id, time, temp, humi, co2, weigh) VALUES ?';
-                connection.query(query, [batch], (error, results) => {
-                    if (error) {
-                        console.error('Error inserting sensor data:', error);
-                        return reject(error);
-                    }
-                    resolve(results);
-                });
-            });
-
-            processedCount += batch.length;
-            console.log(`Inserted ${processedCount} rows of sensor data`);
-            batch = []; // Clear the batch after processing
-        }
-    }
-
-    // Insert remaining data
-    if (batch.length > 0) {
+    const insertBatch = async (batch) => {
         await new Promise((resolve, reject) => {
-            const query = 'INSERT INTO sensor_data (device_id, time, temp, humi, co2, weigh) VALUES ?';
+            const query = `
+                INSERT INTO sensor_data (device_id, time, temp, humi, co2, weigh)
+                VALUES ?
+                ON DUPLICATE KEY UPDATE
+                    temp = VALUES(temp),
+                    humi = VALUES(humi),
+                    co2 = VALUES(co2),
+                    weigh = VALUES(weigh),
+                    time = VALUES(time)
+            `;
             connection.query(query, [batch], (error, results) => {
                 if (error) {
                     console.error('Error inserting sensor data:', error);
@@ -228,21 +218,99 @@ const insertSensorData = async (connection, data) => {
                 resolve(results);
             });
         });
-
         processedCount += batch.length;
-        console.log(`Inserted ${processedCount} rows of sensor data`);
+        totalProcessedCount += batch.length;
+        console.log(`Inserted/Updated ${processedCount} rows of sensor data`);
+        processedCount = 0;
+    };
+
+    for (let i = 0; i < data.length; i++) {
+        batch.push([data[i].id, data[i].time, data[i].temp, data[i].humi, data[i].co2, data[i].weigh]);
+
+        if (batch.length === batchSize) {
+            await insertBatch(batch);
+            batch = []; // Clear the batch after processing
+        }
     }
 
-    console.log(`Finished inserting a total of ${processedCount} rows of sensor data`);
+    // Insert remaining data
+    if (batch.length > 0) {
+        await insertBatch(batch);
+    }
+
+    console.log(`Finished inserting/updating a total of ${totalProcessedCount} rows of sensor data`);
 };
 
-module.exports = {
+// =============================
+// HIVE
+// =============================
+const addHive = (connection, areaId, name) => {
+    return new Promise((resolve, reject) => {
+      // 먼저 중복 체크
+      const checkQuery = 'SELECT id FROM hives WHERE area_id = ? AND name = ?';
+      connection.query(checkQuery, [areaId, name], (checkError, checkResults) => {
+        if (checkError) {
+          console.error('Error checking hive:', checkError);
+          return reject(checkError);
+        }
+        if (checkResults.length > 0) {
+          // 이미 존재하는 경우
+          resolve({ message: 'Hive already exists', hiveId: checkResults[0].id });
+        } else {
+          // 존재하지 않으면 새로 삽입
+          const insertQuery = 'INSERT INTO hives (area_id, name) VALUES (?, ?)';
+          connection.query(insertQuery, [areaId, name], (insertError, insertResults) => {
+            if (insertError) {
+              console.error('Error adding hive:', insertError);
+              return reject(insertError);
+            }
+            resolve({ message: 'Hive added successfully', hiveId: insertResults.insertId });
+          });
+        }
+      });
+    });
+  };
+  
+
+  // =============================
+// DEVICE
+// =============================
+const addDevice = (connection, hiveId, typeId) => {
+    return new Promise((resolve, reject) => {
+      // 먼저 중복 체크
+      const checkQuery = 'SELECT id FROM devices WHERE hive_id = ? AND type_id = ?';
+      connection.query(checkQuery, [hiveId, typeId], (checkError, checkResults) => {
+        if (checkError) {
+          console.error('Error checking device:', checkError);
+          return reject(checkError);
+        }
+        if (checkResults.length > 0) {
+          // 이미 존재하는 경우
+          resolve({ message: 'Device already exists', deviceId: checkResults[0].id });
+        } else {
+          // 존재하지 않으면 새로 삽입
+          const insertQuery = 'INSERT INTO devices (hive_id, type_id) VALUES (?, ?)';
+          connection.query(insertQuery, [hiveId, typeId], (insertError, insertResults) => {
+            if (insertError) {
+              console.error('Error adding device:', insertError);
+              return reject(insertError);
+            }
+            resolve({ message: 'Device added successfully', deviceId: insertResults.insertId });
+          });
+        }
+      });
+    });
+  };
+  
+  module.exports = {
     createDbConnection,
     getAreasAndHives,
     getDevicesByHiveId,
-    checkDevice,
     getInOutDataByDeviceAndTimeRange,
-    insertInOutData,
     getSensorDataByDeviceAndTimeRange,
+    insertInOutData,
     insertSensorData,
-};
+    checkDevice,
+    addHive,
+    addDevice
+  };
