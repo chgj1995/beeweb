@@ -354,6 +354,64 @@ POST /api/hive
 }
 ```
 
+
+#### 장치 조회
+
+**엔드포인트:**
+
+```
+GET /api/device
+```
+
+**설명:**
+
+특정 벌통의 모든 장치 목록을 조회합니다.
+
+**파라미터:**
+
+| 이름   | 타입   | 설명    |
+|--------|--------|---------|
+| hiveId | Number | 벌통 ID |
+
+**요청 예시:**
+
+```json
+GET /api/device?hiveId=1
+```
+
+**응답 예시:**
+
+- **성공:**
+
+```json
+[
+  {
+    "id": 1,
+    "type": 2
+  },
+  {
+    "id": 2,
+    "type": 3
+  }
+]
+```
+
+- **오류:**
+
+```json
+{
+  "message": "Bad Request: Missing hiveId"
+}
+```
+
+또는
+
+```json
+{
+  "message": "Internal Server Error"
+}
+```
+
 #### 장치 추가
 
 **엔드포인트:**
