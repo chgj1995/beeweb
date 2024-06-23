@@ -12,7 +12,70 @@ const connectionConfig = {
   connectTimeout: 10000  // 10초로 타임아웃 시간 설정
 };
 
-const processFile = async (filePath, areaId) => {
+const connectToDatabase = () => {
+  return new Promise((resolve, reject) => {
+    const connection = mysql.createConnection(connectionConfig);
+    connection.connect((err) => {
+      if (err) {
+        console.error('Error connecting to the database:', err);
+        reject(err);
+      } else {
+        console.log('Connected to the database');
+        resolve(connection);
+      }
+    });
+  });
+};
+
+const registerHive = async (connection, areaId, hiveId) => {
+  return new Promise((resolve, reject) => {
+    const query = 'SELECT id FROM hives WHERE area_id = ? AND name = ?';
+    connection.query(query, [areaId, `Hive ${hiveId}`], (error, results) => {
+      if (error) {
+        console.error('Error checking hive:', error);
+        return reject(error);
+      }
+      if (results.length > 0) {
+        resolve(results[0].id);
+      } else {
+        const insertQuery = 'INSERT INTO hives (area_id, name) VALUES (?, ?)';
+        connection.query(insertQuery, [areaId, `Hive ${hiveId}`], (insertError, insertResults) => {
+          if (insertError) {
+            console.error('Error inserting hive:', insertError);
+            return reject(insertError);
+          }
+          resolve(insertResults.insertId);
+        });
+      }
+    });
+  });
+};
+
+const registerDevice = async (connection, hiveId) => {
+  return new Promise((resolve, reject) => {
+    const query = 'SELECT id FROM devices WHERE hive_id = ? AND type_id = 2';
+    connection.query(query, [hiveId], (error, results) => {
+      if (error) {
+        console.error('Error checking device:', error);
+        return reject(error);
+      }
+      if (results.length > 0) {
+        resolve(results[0].id);
+      } else {
+        const insertQuery = 'INSERT INTO devices (hive_id, type_id) VALUES (?, 2)';
+        connection.query(insertQuery, [hiveId], (insertError, insertResults) => {
+          if (insertError) {
+            console.error('Error inserting device:', insertError);
+            return reject(insertError);
+          }
+          resolve(insertResults.insertId);
+        });
+      }
+    });
+  });
+};
+
+const processFile = async (connection, filePath, areaId) => {
   console.log(`Processing file: ${filePath} for area_id: ${areaId}`);
   const fileName = path.basename(filePath);
   const hiveIdMatch = fileName.match(/\[([0-9]+)\]/);
@@ -24,19 +87,9 @@ const processFile = async (filePath, areaId) => {
   }
 
   try {
-    // 데이터베이스 연결
-    const connection = mysql.createConnection(connectionConfig);
-    await new Promise((resolve, reject) => {
-      connection.connect((err) => {
-        if (err) {
-          console.error('Error connecting to the database:', err);
-          reject(err);
-        } else {
-          console.log('Connected to the database');
-          resolve();
-        }
-      });
-    });
+    // Hive 및 Device 등록
+    const hiveDbId = await registerHive(connection, areaId, hiveId);
+    const deviceId = await registerDevice(connection, hiveDbId);
 
     // 엑셀 파일 읽기
     const workbook = xlsx.readFile(filePath);
@@ -46,72 +99,58 @@ const processFile = async (filePath, areaId) => {
     const data = xlsx.utils.sheet_to_json(sheet, { header: 1 });
     const totalRows = data.length - 2; // 헤더를 제외한 전체 행 수
 
-    const query = `
-      INSERT INTO sensor_data (data_id, hive_id, area_id, temp, humi, co2, weigh, time)
+    const sensorQuery = `
+      INSERT INTO sensor_data (device_id, temp, humi, co2, weigh, time)
       VALUES ?
       ON DUPLICATE KEY UPDATE
         temp = VALUES(temp),
         humi = VALUES(humi),
         co2 = VALUES(co2),
-        time = VALUES(time),
-        weigh = VALUES(weigh);
+        weigh = VALUES(weigh),
+        time = VALUES(time);
     `;
 
-    let batch = [];
+    let sensorBatch = [];
     let currentRow = 0;
 
     for (let i = 2; i < data.length; i++) { // 두 번째 행까지 헤더이므로 건너뜀
       const row = data[i];
-      const [time, temp, humi, co2, unused1, unused2, unused3, weigh] = row;
-      const dataId = i - 1; // data_id는 행 번호-1 로 설정
+      const [time, temp, humi, co2, , , , weigh] = row;  // 필요한 데이터만 사용
 
-      batch.push([dataId, hiveId, areaId, temp, humi, co2, weigh, time]);
+      sensorBatch.push([deviceId, temp, humi, co2, weigh, time]);
       currentRow++;
 
-      // 100개씩 묶어서 배치 인서트
-      if (batch.length === 1000) {
+      // 1000개씩 묶어서 배치 인서트
+      if (sensorBatch.length === 1000) {
         await new Promise((resolve, reject) => {
-          connection.query(query, [batch], (error, results) => {
+          connection.query(sensorQuery, [sensorBatch], (error, results) => {
             if (error) {
-              console.error('Error inserting data for file:', fileName, error);
-              reject(error);
+              console.error('Error inserting sensor data for file:', fileName, error);
+              return reject(error);
             } else {
-              console.log(`Processed ${currentRow}/${totalRows} rows for file: ${fileName}`);
+              console.log(`Processed ${currentRow}/${totalRows} sensor rows for file: ${fileName}`);
               resolve();
             }
           });
         });
-        batch = []; // 배치를 초기화
+        sensorBatch = [];
       }
     }
 
     // 남은 데이터 인서트
-    if (batch.length > 0) {
+    if (sensorBatch.length > 0) {
       await new Promise((resolve, reject) => {
-        connection.query(query, [batch], (error, results) => {
+        connection.query(sensorQuery, [sensorBatch], (error, results) => {
           if (error) {
-            console.error('Error inserting data for file:', fileName, error);
-            reject(error);
+            console.error('Error inserting sensor data for file:', fileName, error);
+            return reject(error);
           } else {
-            console.log(`Processed ${currentRow}/${totalRows} rows for file: ${fileName}`);
+            console.log(`Processed ${currentRow}/${totalRows} sensor rows for file: ${fileName}`);
             resolve();
           }
         });
       });
     }
-
-    // 데이터베이스 연결 종료
-    await new Promise((resolve, reject) => {
-      connection.end((err) => {
-        if (err) {
-          console.error('Error disconnecting from the database:', err);
-          reject(err);
-        } else {
-          console.log('Disconnected from the database');
-          resolve();
-        }
-      });
-    });
   } catch (error) {
     console.error(`Error processing file: ${filePath}`, error);
   }
@@ -125,24 +164,38 @@ const folders = fs.readdirSync(currentDir).filter(folder => folder.startsWith('#
 console.log('Found folders:', folders);
 
 const processAllFiles = async () => {
-  for (const folder of folders) {
-    const areaIdMatch = folder.match(/#(\d+)\./);
-    const areaId = areaIdMatch ? parseInt(areaIdMatch[1], 10) : null;
+  const connection = await connectToDatabase();
 
-    if (areaId !== null) {
-      const folderPath = path.join(currentDir, folder);
-      const files = fs.readdirSync(folderPath).filter(file => file.endsWith('.xlsx') && file.includes('['));
+  try {
+    for (const folder of folders) {
+      const areaIdMatch = folder.match(/#(\d+)\./);
+      const areaId = areaIdMatch ? parseInt(areaIdMatch[1], 10) : null;
 
-      console.log(`Found files in folder ${folder}:`, files);
+      if (areaId !== null) {
+        const folderPath = path.join(currentDir, folder);
+        const files = fs.readdirSync(folderPath).filter(file => file.endsWith('.xlsx') && file.includes('['));
 
-      for (const file of files) {
-        const filePath = path.join(folderPath, file);
-        await processFile(filePath, areaId);
+        console.log(`Found files in folder ${folder}:`, files);
+
+        for (const file of files) {
+          const filePath = path.join(folderPath, file);
+          await processFile(connection, filePath, areaId);
+        }
+      } else {
+        console.error(`Error: Area ID not found in the folder name: ${folder}`);
       }
-    } else {
-      console.error(`Error: Area ID not found in the folder name: ${folder}`);
     }
+  } finally {
+    connection.end((err) => {
+      if (err) {
+        console.error('Error disconnecting from the database:', err);
+        return;
+      }
+      console.log('Disconnected from the database');
+    });
   }
 };
 
-processAllFiles();
+processAllFiles().catch((err) => {
+  console.error('Error processing files:', err);
+});
