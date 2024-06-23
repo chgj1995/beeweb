@@ -104,27 +104,26 @@ const checkDevice = (connection, id, type) => {
 // =============================
 // INOUT
 // =============================
-const getInOutDataByDeviceAndTimeRange = (connection, deviceID, sTime, eTime) => {
+const getInOutDataByDeviceAndTimeRange = (connection, deviceId, sTime, eTime) => {
     return new Promise((resolve, reject) => {
         const query = `
         SELECT id, in_field, out_field, time
         FROM inout_data
         WHERE device_id = ? AND time BETWEEN ? AND ?
-        ORDER BY time
+        ORDER BY time DESC
       `;
-        connection.query(query, [deviceID, sTime, eTime], (error, results) => {
+
+        connection.query(query, [deviceId, sTime, eTime], (error, results) => {
             if (error) {
-                console.error('Error fetching inout_data:', error);
+                console.error('Error fetching inout_data:', error.sqlMessage || error);
                 return reject(error);
             }
             resolve(results);
         });
     });
 };
-
 const insertInOutData = async (connection, data) => {
     const batchSize = 1000;
-    let processedCount = 0;
     let totalProcessedCount = 0;
     let batch = [];
 
@@ -146,10 +145,7 @@ const insertInOutData = async (connection, data) => {
                 resolve(results);
             });
         });
-        processedCount += batch.length;
         totalProcessedCount += batch.length;
-        console.log(`Inserted/Updated ${processedCount} rows of inout data`);
-        processedCount = 0;
     };
 
     for (let i = 0; i < data.length; i++) {
@@ -174,15 +170,15 @@ const insertInOutData = async (connection, data) => {
 // SENSOR
 // =============================
 // sensor_data를 조회하는 함수
-const getSensorDataByDeviceAndTimeRange = (connection, deviceID, sTime, eTime) => {
+const getSensorDataByDeviceAndTimeRange = (connection, deviceId, sTime, eTime) => {
     return new Promise((resolve, reject) => {
         const query = `
         SELECT id, temp, humi, co2, weigh, time
         FROM sensor_data
         WHERE device_id = ? AND time BETWEEN ? AND ?
-        ORDER BY time
+        ORDER BY time DESC
       `;
-        connection.query(query, [deviceID, sTime, eTime], (error, results) => {
+        connection.query(query, [deviceId, sTime, eTime], (error, results) => {
             if (error) {
                 console.error('Error fetching sensor_data:', error);
                 return reject(error);
@@ -194,7 +190,6 @@ const getSensorDataByDeviceAndTimeRange = (connection, deviceID, sTime, eTime) =
 
 const insertSensorData = async (connection, data) => {
     const batchSize = 1000;
-    let processedCount = 0;
     let totalProcessedCount = 0;
     let batch = [];
 
@@ -218,10 +213,7 @@ const insertSensorData = async (connection, data) => {
                 resolve(results);
             });
         });
-        processedCount += batch.length;
         totalProcessedCount += batch.length;
-        console.log(`Inserted/Updated ${processedCount} rows of sensor data`);
-        processedCount = 0;
     };
 
     for (let i = 0; i < data.length; i++) {
@@ -272,7 +264,7 @@ const addHive = (connection, areaId, name) => {
   };
   
 
-  // =============================
+// =============================
 // DEVICE
 // =============================
 const addDevice = (connection, hiveId, typeId) => {
