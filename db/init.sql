@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS sensor_data (
 CREATE TABLE IF NOT EXISTS camera_data (
     id INT AUTO_INCREMENT PRIMARY KEY,
     device_id INT NOT NULL,
-    camera VARCHAR(255),
+    picture LONGBLOB,
     time DATETIME DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY unique_device_time (device_id, time)
 );
@@ -57,7 +57,8 @@ ON DUPLICATE KEY UPDATE name = VALUES(name);
 CREATE TABLE IF NOT EXISTS devices (
     id INT AUTO_INCREMENT PRIMARY KEY,
     hive_id INT NOT NULL,
-    type_id INT NOT NULL
+    type_id INT NOT NULL,
+    modem_ip VARCHAR(255)
 );
 
 -- DEVICE_TYPES 테이블 생성 및 초기 데이터 삽입
