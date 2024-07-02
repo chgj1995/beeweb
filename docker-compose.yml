@@ -16,17 +16,6 @@ services:
       - db_data:/var/lib/mysql
     restart: always
 
-  data-collector:
-    build:
-      context: ./data-collector
-      dockerfile: Dockerfile
-    depends_on:
-      - mariadb
-    environment:
-      CHANNEL_ID1: ${CHANNEL_ID1}
-      CHANNEL_ID2: ${CHANNEL_ID2}
-    restart: always
-
   api:
     build:
       context: ./api
@@ -42,19 +31,25 @@ services:
       DB_NAME: hive_data
     restart: always
 
+  data-collector:
+    build:
+      context: ./data-collector
+      dockerfile: Dockerfile
+    depends_on:
+      - api
+    environment:
+      CHANNEL_ID1: ${CHANNEL_ID1}
+      CHANNEL_ID2: ${CHANNEL_ID2}
+    restart: always
+
   web:
     build:
       context: ./web
       dockerfile: Dockerfile
     depends_on:
-      - mariadb
+      - api
     ports:
       - "80:80"
-    environment:
-      DB_HOST: mariadb
-      DB_USER: user
-      DB_PASSWORD: password
-      DB_NAME: hive_data
     restart: always
 
 volumes:

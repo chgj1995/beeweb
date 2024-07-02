@@ -1,94 +1,64 @@
 const express = require('express');
-const mysql = require('mysql');
 const path = require('path');
-const { fetchAreasAndHives, fetchInOutData, fetchSensorData } = require('./queries');
+const axios = require('axios');
 const app = express();
 const port = 80;
 
+const API_BASE_URL = 'http://172.17.0.1:8090/api';
+
+app.use(express.json()); // JSON 본문 구문 분석을 위한 미들웨어
+
 // Serve static files from the 'public' directory
-app.use(express.static('public'));
+app.use('/honeybee', express.static(path.join(__dirname, 'public')));
 
 // Serve Chart.js from node_modules
-app.use('/chart.js', express.static(path.join(__dirname, 'node_modules/chart.js/dist')));
-app.use('/chartjs-adapter-date-fns', express.static(path.join(__dirname, 'node_modules/chartjs-adapter-date-fns/dist')));
+app.use('/honeybee/chart.js', express.static(path.join(__dirname, 'node_modules/chart.js/dist')));
+app.use('/honeybee/chartjs-adapter-date-fns', express.static(path.join(__dirname, 'node_modules/chartjs-adapter-date-fns/dist')));
 
-const dbConfig = {
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-};
+// Create a router for /honeybee
+const honeybeeRouter = express.Router();
 
-const connectToDatabase = () => {
-  return new Promise((resolve, reject) => {
-    const connection = mysql.createConnection(dbConfig);
-
-    const attemptConnection = () => {
-      connection.connect((err) => {
-        if (err) {
-          console.error('Error connecting to the database:', err);
-          setTimeout(attemptConnection, 5000); // 5초 후에 다시 시도
-        } else {
-          console.log('Connected to the database');
-          resolve(connection);
-        }
-      });
-    };
-
-    attemptConnection();
-  });
-};
-
-const createApiHandler = (connection) => {
-  return async (req, res) => {
-    const { type, areaId, hiveId } = req.params;
-    console.log(`Received request for /api/get/${type}/${areaId}/${hiveId}`);
-    try {
-      let data;
-      if (type === 'inout') {
-        data = await fetchInOutData(connection, areaId, hiveId);
-      } else if (type === 'sensor') {
-        data = await fetchSensorData(connection, areaId, hiveId);
-      } else {
-        return res.status(400).send('Invalid request type');
-      }
-      res.json(data);
-    } catch (error) {
-      console.error(`Error fetching data for ${type}/${areaId}/${hiveId}:`, error);
-      res.status(500).send('Internal Server Error');
-    }
-  };
-};
-
-// Route to serve the HTML view
-app.get('/view/:areaId/hive/:hiveId', (req, res) => {
+// Route to serve the HTML view with query parameters
+honeybeeRouter.get('/view', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'view.html'));
 });
 
 // Route to serve the index page
-app.get('/api/areas', async (req, res) => {
+honeybeeRouter.get('/', (req, res) => {
+  res.redirect('/honeybee/view');
+});
+
+// Proxy API requests to the backend API
+honeybeeRouter.use('/api', async (req, res) => {
+  const url = `${API_BASE_URL}${req.originalUrl.replace('/honeybee/api', '')}`;
+  console.log(`Proxying request to ${url}`);
+  
   try {
-    const connection = await connectToDatabase();
-    const areas = await fetchAreasAndHives(connection);
-    connection.end();
-    res.json(areas);
+    const headers = { ...req.headers };
+    // 캐시 관련 헤더 제거
+    delete headers['if-modified-since'];
+    delete headers['if-none-match'];
+
+    const response = await axios({
+      method: req.method,
+      url,
+      data: req.body,
+      headers: headers
+    });
+    res.status(response.status).json(response.data);
   } catch (error) {
-    console.error('Error fetching areas:', error);
-    res.status(500).send('Internal Server Error');
+    console.error(`Error proxying request to ${url}:`, error.message);
+    if (error.response) {
+      res.status(error.response.status).send(error.response.data);
+    } else {
+      res.status(500).send('Internal Server Error');
+    }
   }
 });
 
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+// Use /honeybee as the base path for the honeybeeRouter
+app.use('/honeybee', honeybeeRouter);
 
-connectToDatabase()
-  .then(connection => {
-    app.get('/api/get/:type/:areaId/:hiveId', createApiHandler(connection));
-    app.listen(port, () => {
-      console.log(`Server is running on port ${port}`);
-    });
-  })
-  .catch(error => {
-    console.error('Failed to connect to the database:', error);
-  });
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});
