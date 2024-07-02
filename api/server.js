@@ -8,7 +8,7 @@ const port = 8090;
 
 // Multer configuration for handling file uploads
 const storage = multer.memoryStorage(); // Store files in memory for processing
-const upload = multer({ storage: storage });
+const upload = multer({ storage: storage }).fields([{ name: 'files', maxCount: 10 }, { name: 'metadata', maxCount: 1 }]);
 
 // TODO: 타입 위치 관련
 // DB에서 조회하던지,
@@ -21,10 +21,10 @@ const deviceTypes = {
   'INOUT': 3,
 };
 
-app.use(bodyParser.json());
-
 // DB 연결 설정
 const dbConnection = database.createDbConnection();
+
+app.use(bodyParser.json());
 
 // =============================
 // AREA & HIVE
@@ -162,27 +162,31 @@ app.post('/api/uplink', async (req, res) => {
 });
 
 // POST route to handle uploads
-app.post('/api/upload', upload.fields([{ name: 'files' }, { name: 'metadata' }]), async (req, res) => {
+app.post('/api/upload', upload, async (req, res) => {
   try {
       let type;
       let data;
       let files = req.files ? req.files['files'] : null;
+      const metadataFile = req.files ? req.files['metadata'] : null;
 
       if (req.is('multipart/form-data')) {
-          // Handle multipart/form-data
-          type = req.body.type;
-          data = JSON.parse(req.body.metadata);
+        console.log(req.body);
+        console.log(req.files);
 
-          if (!type || !files || files.length === 0 || !Array.isArray(data)) {
-              return res.status(400).send('Bad Request: Missing required fields or data');
-          }
+        // Handle multipart/form-data
+        type = req.body.type;
+        const metadata = metadataFile ? JSON.parse(metadataFile[0].buffer.toString()) : null;
 
-          // Process each file and corresponding data
-          data = data.map((item, index) => ({
-              id: item.id,
-              time: item.time,
-              picture: files[index].buffer
-          }));
+        if (!type || !files || files.length === 0 || !Array.isArray(metadata)) {
+          return res.status(400).send('Bad Request: Missing required fields or data');
+        }
+
+        // Process each file and corresponding data
+        data = metadata.map((item, index) => ({
+          id: item.id,
+          time: item.time,
+          picture: files[index].buffer
+        }));
       } else if (req.is('application/json')) {
           // Handle application/json
           type = req.body.type;
@@ -194,7 +198,6 @@ app.post('/api/upload', upload.fields([{ name: 'files' }, { name: 'metadata' }])
       } else {
           return res.status(400).send('Bad Request: Unsupported content type');
       }
-
 
       // Get the original client IP from the X-Forwarded-For header
       const originalClientIp = req.headers['x-forwarded-for'] || req.ip;
