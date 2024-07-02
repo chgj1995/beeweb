@@ -1,16 +1,30 @@
-async function fetchInOutData(areaId, hiveId) {
-  const url = `/api/get/inout/${areaId}/${hiveId}`;
+const deviceTypes = {
+  'CAMERA': 1,
+  'SENSOR': 2,
+  'INOUT': 3,
+};
+
+async function fetchInOutData(deviceId, sTime, eTime) {
+  const url = `/honeybee/api/inout?deviceId=${deviceId}&sTime=${sTime}&eTime=${eTime}`;
   const response = await fetch(url);
   const data = await response.json();
-  console.log(`Data received for area_id ${areaId}, hive_id ${hiveId}:`, data);
+  console.log(`Data received for device ${deviceId}:`, data);
   return data;
 }
 
-async function fetchSensorData(areaId, hiveId) {
-  const url = `/api/get/sensor/${areaId}/${hiveId}`;
+async function fetchSensorData(deviceId, sTime, eTime) {
+  const url = `/honeybee/api/sensor?deviceId=${deviceId}&sTime=${sTime}&eTime=${eTime}`;
   const response = await fetch(url);
   const data = await response.json();
-  console.log(`Data received for area_id ${areaId}, hive_id ${hiveId}:`, data);
+  console.log(`Data received for device ${deviceId}:`, data);
+  return data;
+}
+
+async function fetchDevicesByHive(hiveId) {
+  const url = `/honeybee/api/device?hiveId=${hiveId}`;
+  const response = await fetch(url);
+  const data = await response.json();
+  console.log(`Devices received for hive ${hiveId}:`, data);
   return data;
 }
 
@@ -24,12 +38,12 @@ function createChart(ctx, labels, datasets) {
     options: {
       scales: {
         x: {
-          type: 'time', // x축을 시간 축으로 설정
+          type: 'time',
           time: {
-            unit: 'minute', // 시간 단위를 분으로 설정
-            tooltipFormat: 'MM-dd HH:mm', // 툴팁 형식 설정
+            unit: 'minute',
+            tooltipFormat: 'MM-dd',
             displayFormats: {
-              minute: 'MM-dd HH:mm' // x축 라벨 형식 설정
+              minute: 'MM-dd'
             }
           },
           title: {
@@ -37,31 +51,37 @@ function createChart(ctx, labels, datasets) {
             text: 'Time'
           },
           ticks: {
-            source: 'data', // 값이 있는 포인트에만 x축을 표기
+            source: 'data',
             autoSkip: true,
-            maxTicksLimit: 10 // x축 라벨의 최대 표시 개수
+            maxTicksLimit: 10
           }
         }
-      }
+      },
+      responsive: false,
+      maintainAspectRatio: false,
     }
   });
 }
 
-function createInOutChart(ctx, created_at, field1, field2) {
+function createInOutChart(ctx, created_at, in_field, out_field) {
   createChart(ctx, created_at, [
     {
       label: 'in',
-      data: field1,
+      data: in_field,
       borderColor: 'rgba(75, 192, 192, 1)',
       backgroundColor: 'rgba(75, 192, 192, 0.2)',
-      fill: true,
+      fill: false,
+      pointRadius: 0,  // Hide data points
+      borderWidth: 1
     },
     {
       label: 'out',
-      data: field2,
+      data: out_field,
       borderColor: 'rgba(192, 75, 192, 1)',
       backgroundColor: 'rgba(192, 75, 192, 0.2)',
-      fill: true,
+      fill: false,
+      pointRadius: 0,  // Hide data points
+      borderWidth: 1
     }
   ]);
 }
@@ -73,14 +93,18 @@ function createTempHumiChart(ctx, time, temp, humi) {
       data: temp,
       borderColor: 'rgba(75, 192, 192, 1)',
       backgroundColor: 'rgba(75, 192, 192, 0.2)',
-      fill: true,
+      fill: false,
+      pointRadius: 0,  // Hide data points
+      borderWidth: 1
     },
     {
       label: 'humi',
       data: humi,
       borderColor: 'rgba(192, 75, 192, 1)',
       backgroundColor: 'rgba(192, 75, 192, 0.2)',
-      fill: true,
+      fill: false,
+      pointRadius: 0,  // Hide data points
+      borderWidth: 1
     }
   ]);
 }
@@ -92,7 +116,9 @@ function createCo2Chart(ctx, time, co2) {
       data: co2,
       borderColor: 'rgba(75, 192, 192, 1)',
       backgroundColor: 'rgba(75, 192, 192, 0.2)',
-      fill: true,
+      fill: false,
+      pointRadius: 0,  // Hide data points
+      borderWidth: 1
     }
   ]);
 }
@@ -104,27 +130,67 @@ function createWeighChart(ctx, time, weigh) {
       data: weigh,
       borderColor: 'rgba(75, 192, 192, 1)',
       backgroundColor: 'rgba(75, 192, 192, 0.2)',
-      fill: true,
+      fill: false,
+      pointRadius: 0,  // Hide data points
+      borderWidth: 1
     }
   ]);
 }
 
-async function renderCharts(areaId, hiveId) {
-  console.log('Rendering charts for area', areaId, 'hive', hiveId);
-  
-  const inoutData = await fetchInOutData(areaId, hiveId);
-  const sensorData = await fetchSensorData(areaId, hiveId);
+async function fetchAndRenderCharts(urlParams) {
+  // URL 쿼리 매개변수에서 hiveId, sTime, eTime 추출
+  const urlSearchParams = new URLSearchParams(urlParams);
+  let hiveId = urlSearchParams.get('hiveId');
+  let sTime = urlSearchParams.get('sTime');
+  let eTime = urlSearchParams.get('eTime');
 
-  createInOutChart(document.getElementById('hive_io').getContext('2d'), inoutData.created_at, inoutData.in, inoutData.out);
-  createTempHumiChart(document.getElementById('hive_th').getContext('2d'), sensorData.time, sensorData.temp, sensorData.humi);
-  createCo2Chart(document.getElementById('hive_co2').getContext('2d'), sensorData.time, sensorData.co2);
-  createWeighChart(document.getElementById('hive_weigh').getContext('2d'), sensorData.time, sensorData.weigh);
+  // 기본값 설정
+  if (!hiveId) {
+    hiveId = 1;
+  }
+
+  if (!sTime || !eTime) {
+    const now = new Date();
+    const twoMonthAgo = new Date();
+    twoMonthAgo.setMonth(now.getMonth() - 2);
+  
+    const defaultSTime = twoMonthAgo.toISOString().slice(0, 19).replace('T', ' ');
+    const defaultETime = now.toISOString().slice(0, 19).replace('T', ' ');
+    
+    sTime = sTime || defaultSTime;
+    eTime = eTime || defaultETime;
+  }
+
+  // 장치 목록 조회
+  const devices = await fetchDevicesByHive(hiveId);
+  const sensorData = [];
+  const inoutData = [];
+
+  for (const device of devices) {
+    let result;
+    if (device.type === deviceTypes.SENSOR) {
+      result = await fetchSensorData(device.id, sTime, eTime);
+    } else if (device.type === deviceTypes.INOUT) {
+      result = await fetchInOutData(device.id, sTime, eTime);
+    }
+
+    if (result && result.length > 0) {
+      if (device.type === deviceTypes.SENSOR) {
+        sensorData.push(...result);
+      } else if (device.type === deviceTypes.INOUT) {
+        inoutData.push(...result);
+      }
+    }
+  }
+
+  // 차트 렌더링
+  createInOutChart(document.getElementById('hive_io').getContext('2d'), inoutData.map(data => data.time), inoutData.map(data => data.in_field), inoutData.map(data => data.out_field));
+  createTempHumiChart(document.getElementById('hive_th').getContext('2d'), sensorData.map(data => data.time), sensorData.map(data => data.temp), sensorData.map(data => data.humi));
+  createCo2Chart(document.getElementById('hive_co2').getContext('2d'), sensorData.map(data => data.time), sensorData.map(data => data.co2));
+  createWeighChart(document.getElementById('hive_weigh').getContext('2d'), sensorData.map(data => data.time), sensorData.map(data => data.weigh));
 }
 
+
 document.addEventListener('DOMContentLoaded', function() {
-  const pathParts = window.location.pathname.split('/');
-  const areaId = pathParts[2];
-  const hiveId = pathParts[4];
-  document.getElementById('hiveId').textContent = `Area ${areaId}, Hive ${hiveId}`;
-  renderCharts(areaId, hiveId);
+  fetchAndRenderCharts(window.location.search);
 });
