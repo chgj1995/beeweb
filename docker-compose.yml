@@ -25,19 +25,6 @@ services:
     ports:
       - "8090:8090"
     environment:
-      CHANNEL_ID1: ${CHANNEL_ID1}
-      CHANNEL_ID2: ${CHANNEL_ID2}
-    restart: always
-
-  api:
-    build:
-      context: ./api
-      dockerfile: Dockerfile
-    depends_on:
-      - mariadb
-    ports:
-      - "8090:8090"
-    environment:
       DB_HOST: mariadb
       DB_USER: user
       DB_PASSWORD: password
