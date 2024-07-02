@@ -1,5 +1,8 @@
 # Thingspeak 설정파일 추가
-mv .env_example .env_example
+mv .env_example .env
+
+## Thingspeak CHANNEL ID 수정
+nano .env
 
 # npm install 에러 발생 시 오류 해결
 ufw disable

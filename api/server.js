@@ -1,9 +1,14 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const multer = require('multer');
 const database = require('./db');
 
 const app = express();
 const port = 8090;
+
+// Multer configuration for handling file uploads
+const storage = multer.memoryStorage(); // Store files in memory for processing
+const upload = multer({ storage: storage });
 
 // TODO: 타입 위치 관련
 // DB에서 조회하던지,
@@ -73,21 +78,47 @@ app.get('/api/sensor', async (req, res) => {
 });
 
 // =============================
+// CAMERA
+// =============================
+// GET 요청을 처리하여 데이터 반환
+app.get('/api/camera', async (req, res) => {
+  const { deviceId, sTime, eTime } = req.query;
+  if (!deviceId || !sTime || !eTime) {
+    return res.status(400).send('Bad Request: Missing required fields');
+  }
+
+  try {
+    const data = await database.getCameraDataByDeviceAndTimeRange(dbConnection, deviceId, sTime, eTime);
+    res.json(data);
+  } catch (error) {
+    console.error('Error fetching camera data:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+// =============================
 // UPLINK & UPLOAD
 // =============================
-const handleInOutData = async (data, dbConnection) => {
+const handleInOutData = async (dbConnection, data) => {
   if (data.some(item => item.inField == null || item.outField == null)) {
     throw new Error('Bad Request: Missing required fields');
   }
   await database.insertInOutData(dbConnection, data);
 };
 
-const handleSensorData = async (data, dbConnection) => {
+const handleSensorData = async (dbConnection, data) => {
   if (data.some(item => item.temp == null && item.humi == null && item.co2 == null && item.weigh == null)) {
     throw new Error('Bad Request: Missing required fields');
   }
   await database.insertSensorData(dbConnection, data);
 };
+
+const handleCameraData = async (dbConnection, data) => {
+  if (data.some(item => item.picture == null)) {
+    throw new Error('Bad Request: Missing required fields');
+  }
+  await database.insertCameraData(dbConnection, data);
+}
 
 app.post('/api/uplink', async (req, res) => {
   const { id, type } = req.body;
@@ -130,28 +161,64 @@ app.post('/api/uplink', async (req, res) => {
   }
 });
 
-app.post('/api/upload', async (req, res) => {
-  const { type, data } = req.body;
-
-  if (!type || !Array.isArray(data) || data.length === 0) {
-    return res.status(400).send('Bad Request: Missing required fields or data');
-  }
-
+// POST route to handle uploads
+app.post('/api/upload', upload.fields([{ name: 'files' }, { name: 'metadata' }]), async (req, res) => {
   try {
-    if (type === deviceTypes.INOUT) {
-      await handleInOutData(data, dbConnection);
+      let type;
+      let data;
+      let files = req.files ? req.files['files'] : null;
+
+      if (req.is('multipart/form-data')) {
+          // Handle multipart/form-data
+          type = req.body.type;
+          data = JSON.parse(req.body.metadata);
+
+          if (!type || !files || files.length === 0 || !Array.isArray(data)) {
+              return res.status(400).send('Bad Request: Missing required fields or data');
+          }
+
+          // Process each file and corresponding data
+          data = data.map((item, index) => ({
+              id: item.id,
+              time: item.time,
+              picture: files[index].buffer
+          }));
+      } else if (req.is('application/json')) {
+          // Handle application/json
+          type = req.body.type;
+          data = req.body.data;
+
+          if (!type || !Array.isArray(data) || data.length === 0) {
+              return res.status(400).send('Bad Request: Missing required fields or data');
+          }
+      } else {
+          return res.status(400).send('Bad Request: Unsupported content type');
+      }
+
+
+      // Get the original client IP from the X-Forwarded-For header
+      const originalClientIp = req.headers['x-forwarded-for'] || req.ip;
+      // Update device IP
+      await database.updateDeviceIP(dbConnection, data, originalClientIp);
+
+      // Handle different types of data
+      if (type === deviceTypes.INOUT) {
+          await handleInOutData(dbConnection, data);
+      } else if (type === deviceTypes.SENSOR) {
+          await handleSensorData(dbConnection, data);
+      } else if (type === deviceTypes.CAMERA) {
+          await handleCameraData(dbConnection, data);
+      } else {
+          return res.status(400).send('Bad Request: Invalid device type');
+      }
+
       res.status(201).send('Data inserted successfully');
-    } else if (type === deviceTypes.SENSOR) {
-      await handleSensorData(data, dbConnection);
-      res.status(201).send('Data inserted successfully');
-    } else {
-      return res.status(400).send('Bad Request: Invalid device type');
-    }
   } catch (error) {
-    console.error('Error processing upload:', error);
-    res.status(500).send('Internal Server Error');
+      console.error('Error processing upload:', error);
+      res.status(500).send('Internal Server Error');
   }
 });
+
 
 // =============================
 // HIVE
