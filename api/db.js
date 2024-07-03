@@ -401,7 +401,7 @@ const updateDeviceIP = async (connection, data, ip) => {
                 });
             });
         }
-        console.log(`Finished updating IP addresses for devices: ${uniqueDeviceIds.join(', ')}`);
+        console.log(`Finished updating IP(${ip}) for devices: ${uniqueDeviceIds.join(', ')}`);
     } catch (error) {
         throw new Error('Error updating device IP addresses');
     }

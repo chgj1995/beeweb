@@ -142,14 +142,14 @@ app.post('/api/uplink', async (req, res) => {
       if (inField == null || outField == null) {
         return res.status(400).send('Bad Request: Missing required fields');
       }
-      await handleInOutData([{ id, time, inField, outField }], dbConnection);
+      await handleInOutData(dbConnection, [{ id, time, inField, outField }]);
       res.status(201).send('Data inserted successfully');
     } else if (type === deviceTypes.SENSOR) {
       const { temp, humi, co2, weigh } = req.body;
       if (temp == null && humi == null && co2 == null && weigh == null) {
         return res.status(400).send('Bad Request: Missing required fields');
       }
-      await handleSensorData([{ id, time, temp, humi, co2, weigh }], dbConnection);
+      await handleSensorData(dbConnection, [{ id, time, temp, humi, co2, weigh }]);
       res.status(201).send('Data inserted successfully');
     } else {
       return res.status(400).send('Bad Request: Invalid device type');
@@ -203,8 +203,8 @@ app.post('/api/upload', upload.any(), async (req, res) => {
 
     
     // Get the original client IP from the X-Forwarded-For header
-    console.log(req.headers);
     const originalClientIp = req.headers['X-forwarded-for'];
+    console.log(originalClientIp);
     // Update device IP
     await database.updateDeviceIP(dbConnection, data, originalClientIp);
 
