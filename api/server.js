@@ -6,9 +6,8 @@ const database = require('./db');
 const app = express();
 const port = 8090;
 
-// Multer configuration for handling file uploads
-const storage = multer.memoryStorage(); // Store files in memory for processing
-const upload = multer({ storage: storage }).fields([{ name: 'files', maxCount: 10 }, { name: 'metadata', maxCount: 1 }]);
+// Multer 설정
+const upload = multer(); // Multer 설정
 
 // TODO: 타입 위치 관련
 // DB에서 조회하던지,
@@ -117,6 +116,7 @@ const handleCameraData = async (dbConnection, data) => {
   if (data.some(item => item.picture == null)) {
     throw new Error('Bad Request: Missing required fields');
   }
+  console.log(data);
   await database.insertCameraData(dbConnection, data);
 }
 
@@ -162,64 +162,72 @@ app.post('/api/uplink', async (req, res) => {
 });
 
 // POST route to handle uploads
-app.post('/api/upload', upload, async (req, res) => {
+app.post('/api/upload', upload.any(), async (req, res) => {
   try {
-      let type;
-      let data;
-      let files = req.files ? req.files['files'] : null;
-      const metadataFile = req.files ? req.files['metadata'] : null;
+    let type;
+    let data = [];
+    if (req.is('multipart/form-data')) {
+      let files = req.files.filter(file => file.fieldname.startsWith('file'));
+      // Handle multipart/form-data
+      type = req.body.type;
 
-      if (req.is('multipart/form-data')) {
-        console.log(req.body);
-        console.log(req.files);
+      // Extract metadata from the request
+      const metadata = files.map((file, index) => ({
+        id: req.body[`file${index + 1}_id`],
+        time: req.body[`file${index + 1}_time`],
+        file: file
+      }));
 
-        // Handle multipart/form-data
-        type = req.body.type;
-        const metadata = metadataFile ? JSON.parse(metadataFile[0].buffer.toString()) : null;
-
-        if (!type || !files || files.length === 0 || !Array.isArray(metadata)) {
-          return res.status(400).send('Bad Request: Missing required fields or data');
-        }
-
-        // Process each file and corresponding data
-        data = metadata.map((item, index) => ({
-          id: item.id,
-          time: item.time,
-          picture: files[index].buffer
-        }));
-      } else if (req.is('application/json')) {
-          // Handle application/json
-          type = req.body.type;
-          data = req.body.data;
-
-          if (!type || !Array.isArray(data) || data.length === 0) {
-              return res.status(400).send('Bad Request: Missing required fields or data');
-          }
-      } else {
-          return res.status(400).send('Bad Request: Unsupported content type');
+      if (!type || !files || files.length === 0 || metadata.some(item => !item.id || !item.time)) {
+        return res.status(400).send('Bad Request: Missing required fields or data');
       }
 
-      // Get the original client IP from the X-Forwarded-For header
-      const originalClientIp = req.headers['x-forwarded-for'] || req.ip;
-      // Update device IP
-      await database.updateDeviceIP(dbConnection, data, originalClientIp);
+      // Process each file and corresponding data
+      data = metadata.map((item, index) => ({
+        id: item.id,
+        time: item.time,
+        picture: item.file.buffer
+      }));
 
-      // Handle different types of data
-      if (type === deviceTypes.INOUT) {
-          await handleInOutData(dbConnection, data);
-      } else if (type === deviceTypes.SENSOR) {
-          await handleSensorData(dbConnection, data);
-      } else if (type === deviceTypes.CAMERA) {
-          await handleCameraData(dbConnection, data);
-      } else {
-          return res.status(400).send('Bad Request: Invalid device type');
+    } else if (req.is('application/json')) {
+      // Handle application/json
+      type = req.body.type;
+      data = req.body.data;
+
+      if (!type || !Array.isArray(data) || data.length === 0) {
+        return res.status(400).send('Bad Request: Missing required fields or data');
       }
+    } else {
+      return res.status(400).send('Bad Request: Unsupported content type');
+    }
 
-      res.status(201).send('Data inserted successfully');
+    
+    // Get the original client IP from the X-Forwarded-For header
+    console.log(req.headers);
+    console.log(req.ip);
+    const originalClientIp = req.headers['X-forwarded-for'] || req.ip;
+    // Update device IP
+    await database.updateDeviceIP(dbConnection, data, originalClientIp);
+
+    // Handle different types of data
+    if (type == deviceTypes.INOUT) {
+      await handleInOutData(dbConnection, data);
+    } else if (type == deviceTypes.SENSOR) {
+      await handleSensorData(dbConnection, data);
+    } else if (type == deviceTypes.CAMERA) {
+      await handleCameraData(dbConnection, data);
+    } else {
+      return res.status(400).send('Bad Request: Invalid device type');
+    }
+    res.status(201).send('Data inserted successfully');
   } catch (error) {
-      console.error('Error processing upload:', error);
-      res.status(500).send('Internal Server Error');
+    console.error('Error processing upload:', error);
+    res.status(500).send('Internal Server Error');
   }
+});
+
+app.listen(3000, () => {
+  console.log('Backend server is running on port 3000');
 });
 
 
