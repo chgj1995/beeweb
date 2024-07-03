@@ -15,8 +15,6 @@ services:
     volumes:
       - db_data:/var/lib/mysql
     restart: always
-    networks:
-      - webnet
 
   api:
     build:
@@ -32,8 +30,6 @@ services:
       DB_PASSWORD: password
       DB_NAME: hive_data
     restart: always
-    networks:
-      - webnet
 
   data-collector:
     build:
@@ -45,8 +41,6 @@ services:
       CHANNEL_ID1: ${CHANNEL_ID1}
       CHANNEL_ID2: ${CHANNEL_ID2}
     restart: always
-    networks:
-      - webnet
 
   web:
     build:
@@ -57,8 +51,6 @@ services:
     expose:
       - "3000:3000"
     restart: always
-    networks:
-      - webnet
 
   nginx:
     image: nginx:latest
@@ -69,13 +61,6 @@ services:
     depends_on:
       - web
     restart: always
-    networks:
-      - webnet
 
 volumes:
   db_data:
-
-networks:
-  webnet:
-    external:
-      name: beeweb_webnet

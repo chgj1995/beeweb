@@ -36,15 +36,6 @@ honeybeeRouter.get('/', (req, res) => {
   res.redirect('/honeybee/view');
 });
 
-// Middleware to log and set client IP
-honeybeeRouter.use((req, res, next) => {
-  console.log(req.headers);
-  console.log(req.headers['x-forwarded-for']);
-  // const clientIp = req.headers['x-forwarded-for'];
-  // proxyReq.setHeader('X-Forwarded-For', clientIp);
-  next();
-});
-
 // Proxy API requests to the backend API
 honeybeeRouter.use('/api', createProxyMiddleware({
   target: API_BASE_URL,
@@ -54,9 +45,10 @@ honeybeeRouter.use('/api', createProxyMiddleware({
   },
   onProxyReq: (proxyReq, req, res) => {
     // Add original client IP to X-Forwarded-For header
-    // x-forwarded-for
     console.log(req.headers);
-    const clientIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    console.log(req.headers['X-Forwarded-For']);
+    console.log(req.connection.remoteAddress);
+    const clientIp = req.headers['X-Forwarded-For'] || req.connection.remoteAddress;
     proxyReq.setHeader('X-Forwarded-For', clientIp);
   },
   onError: (err, req, res) => {
