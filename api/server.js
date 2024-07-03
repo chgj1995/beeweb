@@ -179,6 +179,7 @@ app.post('/api/upload', upload.any(), async (req, res) => {
       }));
 
       if (!type || !files || files.length === 0 || metadata.some(item => !item.id || !item.time)) {
+        console.log(type, files, metadata);
         return res.status(400).send('Bad Request: Missing required fields or data');
       }
 
@@ -204,7 +205,6 @@ app.post('/api/upload', upload.any(), async (req, res) => {
     
     // Get the original client IP from the X-Forwarded-For header
     const originalClientIp = req.headers['X-forwarded-for'];
-    console.log(originalClientIp);
     // Update device IP
     await database.updateDeviceIP(dbConnection, data, originalClientIp);
 
