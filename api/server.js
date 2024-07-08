@@ -34,7 +34,7 @@ app.get('/api/areahive', async (req, res) => {
     res.json(data);
   } catch (error) {
     console.error('Error fetching areas and hives:', error);
-    res.status(500).send('Internal Server Error');
+    return res.status(500).send('Internal Server Error');
   }
 });
 
@@ -53,7 +53,7 @@ app.get('/api/inout', async (req, res) => {
     res.json(data);
   } catch (error) {
     console.error('Error fetching inout data:', error);
-    res.status(500).send('Internal Server Error');
+    return res.status(500).send('Internal Server Error');
   }
 });
 
@@ -72,7 +72,7 @@ app.get('/api/sensor', async (req, res) => {
     res.json(data);
   } catch (error) {
     console.error('Error fetching sensor data:', error);
-    res.status(500).send('Internal Server Error');
+    return res.status(500).send('Internal Server Error');
   }
 });
 
@@ -91,7 +91,7 @@ app.get('/api/camera', async (req, res) => {
     res.json(data);
   } catch (error) {
     console.error('Error fetching camera data:', error);
-    res.status(500).send('Internal Server Error');
+    return res.status(500).send('Internal Server Error');
   }
 });
 
@@ -144,21 +144,21 @@ app.post('/api/uplink', async (req, res) => {
         return res.status(400).send('Bad Request: Missing required fields');
       }
       await handleInOutData(dbConnection, [{ id, time, inField, outField }]);
-      res.status(201).send('Data inserted successfully');
+      return res.status(201).send('Data inserted successfully');
     } else if (type === deviceTypes.SENSOR) {
       const { temp, humi, co2, weigh } = req.body;
       if (temp == null && humi == null && co2 == null && weigh == null) {
         return res.status(400).send('Bad Request: Missing required fields');
       }
       await handleSensorData(dbConnection, [{ id, time, temp, humi, co2, weigh }]);
-      res.status(201).send('Data inserted successfully');
+      return res.status(201).send('Data inserted successfully');
     } else {
       return res.status(400).send('Bad Request: Invalid device type');
     }
     
   } catch (error) {
     console.error('Error processing uplink:', error);
-    res.status(500).send('Internal Server Error');
+    return res.status(500).send('Internal Server Error');
   }
 });
 
@@ -225,10 +225,10 @@ app.post('/api/upload', upload.any(), async (req, res) => {
     } else {
       return res.status(400).send('Bad Request: Invalid device type');
     }
-    res.status(201).send('Data inserted successfully');
+    return res.status(201).send('Data inserted successfully');
   } catch (error) {
     console.error('Error processing upload:', error);
-    res.status(500).send('Internal Server Error');
+    return res.status(500).send('Internal Server Error');
   }
 });
 
@@ -251,13 +251,13 @@ app.post('/api/hive', async (req, res) => {
   try {
     const result = await database.addHive(dbConnection, areaId, name);
     if(result.existing) {
-      res.status(409).json({message: 'Hive already exists', hiveId: result.hiveId});
+      return res.status(409).json({message: 'Hive already exists', hiveId: result.hiveId});
     } else {
-      res.status(201).json({message: 'Hive added successfully', hiveId: result.hiveId});
+      return res.status(201).json({message: 'Hive added successfully', hiveId: result.hiveId});
     }
   } catch (error) {
     console.error('Error adding hive:', error);
-    res.status(500).send('Internal Server Error');
+    return res.status(500).send('Internal Server Error');
   }
 });
 
@@ -273,10 +273,10 @@ app.get('/api/device', async (req, res) => {
 
   try {
     const devices = await database.getDevicesByHiveId(dbConnection, hiveId);
-    res.status(200).json(devices);
+    return res.status(200).json(devices);
   } catch (error) {
     console.error('Error fetching devices:', error);
-    res.status(500).send('Internal Server Error');
+    return res.status(500).send('Internal Server Error');
   }
 });
 
@@ -290,14 +290,13 @@ app.post('/api/device', async (req, res) => {
   try {
     const result = await database.addDevice(dbConnection, hiveId, typeId);
     if(result.existing) {
-      res.status(409).json({message: 'Device already exists', deviceId: result.deviceId});
+      return res.status(409).json({message: 'Device already exists', deviceId: result.deviceId});
     } else {
-      res.status(201).json({message: 'Device added successfully', deviceId: result.deviceId});
+      return res.status(201).json({message: 'Device added successfully', deviceId: result.deviceId});
     }
-    res.status(201).json(result); // 수정된 부분
   } catch (error) {
     console.error('Error adding device:', error);
-    res.status(500).send('Internal Server Error');
+    return res.status(500).send('Internal Server Error');
   }
 });
 

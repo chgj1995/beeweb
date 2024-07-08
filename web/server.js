@@ -50,7 +50,7 @@ honeybeeRouter.use('/api', createProxyMiddleware({
   },
   onError: (err, req, res) => {
     console.error(`Error proxying request to ${API_BASE_URL}${req.originalUrl}:`, err.message);
-    res.status(500).send('Internal Server Error');
+    return res.status(500).send('Internal Server Error');
   }
 }));
 
