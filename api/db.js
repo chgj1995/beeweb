@@ -324,7 +324,7 @@ const addHive = (connection, areaId, name) => {
             }
             if (checkResults.length > 0) {
                 // 이미 존재하는 경우
-                resolve({ message: 'Hive already exists', hiveId: checkResults[0].id });
+                resolve({ existing: true, hiveId: checkResults[0].id });
             } else {
                 // 존재하지 않으면 새로 삽입
                 const insertQuery = 'INSERT INTO hives (area_id, name) VALUES (?, ?)';
@@ -333,7 +333,7 @@ const addHive = (connection, areaId, name) => {
                         console.error('Error adding hive:', insertError);
                         return reject(insertError);
                     }
-                    resolve({ message: 'Hive added successfully', hiveId: insertResults.insertId });
+                    resolve({ existing: false, hiveId: insertResults.insertId });
                 });
             }
         });
@@ -361,7 +361,7 @@ const addDevice = (connection, hiveId, typeId) => {
             }
             if (checkResults.length > 0) {
                 // 이미 존재하는 경우
-                resolve({ message: 'Device already exists', deviceId: checkResults[0].id });
+                resolve({ existing: true, deviceId: checkResults[0].id });
             } else {
                 // 존재하지 않으면 새로 삽입
                 const insertQuery = 'INSERT INTO devices (hive_id, type_id) VALUES (?, ?)';
@@ -370,7 +370,7 @@ const addDevice = (connection, hiveId, typeId) => {
                         console.error('Error adding device:', insertError);
                         return reject(insertError);
                     }
-                    resolve({ message: 'Device added successfully', deviceId: insertResults.insertId });
+                    resolve({ existing: false, deviceId: insertResults.insertId });
                 });
             }
         });

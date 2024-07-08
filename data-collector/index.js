@@ -60,7 +60,7 @@ const fetchAndInsertData = async (group_id, results = 5) => {
     }
 
     for (let entry of data) {
-      const time = convertToMySQLDateTime(entry.created_at);
+      const time = entry.created_at;
       const fields = [
         { hiveId: hiveIds[0], inField: entry.field1, outField: entry.field2 },
         { hiveId: hiveIds[1], inField: entry.field3, outField: entry.field4 },

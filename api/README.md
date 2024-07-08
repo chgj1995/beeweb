@@ -20,6 +20,37 @@ GET /areahive
 - **설명**: 지역 벌집 목록을 조회합니다.
 - **URL**: `{{SERVER_IP}}/honeybee/api/areahive`
 - **메서드**: `GET`
+- **응답**:
+  - **200 OK**:
+    ```json
+    [
+      {
+        "id": 1,
+        "name": "Area 1",
+        "hives": [
+          {
+            "id": 1,
+            "name": "Hive 1"
+          },
+          {
+            "id": 2,
+            "name": "Hive 2"
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "name": "Area 2",
+        "hives": []
+      }
+    ]
+    ```
+  - **500 Internal Server Error**:
+    ```json
+    {
+      "message": "Internal Server Error"
+    }
+    ```
 
 ### 장치
 
@@ -37,14 +68,67 @@ POST /device
       "typeId": 1
     }
     ```
+- **응답**:
+  - **201 Created**:
+    ```json
+    {
+      "message": "Device added successfully",
+      "deviceId": 5
+    }
+    ```
+  - **400 Bad Request**:
+    ```json
+    {
+      "message": "Bad Request: Missing required fields"
+    }
+    ```
+  - **409 Conflict**:
+    ```json
+    {
+      "message": "Device already exists",
+      "deviceId": 3
+    }
+    ```
+  - **500 Internal Server Error**:
+    ```json
+    {
+      "message": "Internal Server Error"
+    }
+    ```
 
 #### 장치 조회
 ```
 GET /device?hiveId=3
 ```
-- **설명**: 특정 벌집에 대한 장치를 조회합니다.
+- **설명**: 특정 벌집에 대한 장치 목록을 조회합니다.
 - **URL**: `{{SERVER_IP}}/honeybee/api/device?hiveId=3`
 - **메서드**: `GET`
+- **응답**:
+  - **200 OK**:
+    ```json
+    [
+      {
+        "id": 1,
+        "type": 2
+      },
+      {
+        "id": 2,
+        "type": 1
+      }
+    ]
+    ```
+  - **400 Bad Request**:
+    ```json
+    {
+      "message": "Bad Request: Missing hiveId"
+    }
+    ```
+  - **500 Internal Server Error**:
+    ```json
+    {
+      "message": "Internal Server Error"
+    }
+    ```
 
 ### 벌집
 
@@ -62,32 +146,151 @@ POST /hive
       "name": "Hive 1"
     }
     ```
+- **응답**:
+  - **201 Created**:
+    ```json
+    {
+      "message": "Hive added successfully",
+      "hiveId": 3
+    }
+    ```
+  - **400 Bad Request**:
+    ```json
+    {
+      "message": "Bad Request: Missing required fields"
+    }
+    ```
+  - **409 Conflict**:
+    ```json
+    {
+      "message": "Hive already exists",
+      "hiveId": 2
+    }
+    ```
+  - **500 Internal Server Error**:
+    ```json
+    {
+      "message": "Internal Server Error"
+    }
+    ```
 
 ### 데이터
 
 #### 출입 데이터 조회
 ```
-GET /inout?deviceId=1&sTime=2024-05-09 13:15:11&eTime=2024-07-09 13:15:11
+GET /inout?deviceId=1&sTime=2024-05-09T13:15:11Z&eTime=2024-07-09T13:15:11Z
 ```
-- **설명**: 특정 장치의 출입 데이터를 시간 범위 내에서 조회합니다.
-- **URL**: `{{SERVER_IP}}/honeybee/api/inout?deviceId=1&sTime=2024-05-09 13:15:11&eTime=2024-07-09 13:15:11`
+- **설명**: 특정 장치의 출입 데이터를 지정된 시간 범위 내에서 조회합니다.
+- **URL**: `{{SERVER_IP}}/honeybee/api/inout?deviceId=1&sTime=2024-05-09T13:15:11Z&eTime=2024-07-09T13:15:11Z`
 - **메서드**: `GET`
+- **응답**:
+  - **200 OK**:
+    ```json
+    [
+      {
+        "id": 1,
+        "in_field": 10,
+        "out_field": 20,
+        "time": "2024-06-23T10:00:00Z"
+      },
+      {
+        "id": 2,
+        "in_field": 15,
+        "out_field": 25,
+        "time": "2024-06-23T11:00:00Z"
+      }
+    ]
+    ```
+  - **400 Bad Request**:
+    ```json
+    {
+      "message": "Bad Request: Missing required fields"
+    }
+    ```
+  - **500 Internal Server Error**:
+    ```json
+    {
+      "message": "Internal Server Error"
+    }
+    ```
 
 #### 센서 데이터 조회
 ```
-GET /sensor?deviceId=11&sTime=2024-05-09 13:15:11&eTime=2024-07-09 13:15:11
+GET /sensor?deviceId=11&sTime=2024-05-09T13:15:11Z&eTime=2024-07-09T13:15:11Z
 ```
-- **설명**: 특정 장치의 센서 데이터를 시간 범위 내에서 조회합니다.
-- **URL**: `{{SERVER_IP}}/honeybee/api/sensor?deviceId=11&sTime=2024-05-09 13:15:11&eTime=2024-07-09 13:15:11`
+- **설명**: 특정 장치의 센서 데이터를 지정된 시간 범위 내에서 조회합니다.
+- **URL**: `{{SERVER_IP}}/honeybee/api/sensor?deviceId=11&sTime=2024-05-09T13:15:11Z&eTime=2024-07-09T13:15:11Z`
 - **메서드**: `GET`
+- **응답**:
+  - **200 OK**:
+    ```json
+    [
+      {
+        "id": 11,
+        "temp": 25.5,
+        "humi": 60.0,
+        "co2": 400,
+        "weigh": 50.0,
+        "time": "2024-06-23T10:00:00Z"
+      },
+      {
+        "id": 12,
+        "temp": 26.0,
+        "humi": 58.0,
+        "co2": 410,
+        "weigh": 51.0,
+        "time": "2024-06-23T11:00:00Z"
+      }
+    ]
+    ```
+  - **400 Bad Request**:
+    ```json
+    {
+      "message": "Bad Request: Missing required fields"
+    }
+    ```
+  - **500 Internal Server Error**:
+    ```json
+    {
+      "message": "Internal Server Error"
+    }
+    ```
 
 #### 카메라 데이터 조회
 ```
-GET /camera?deviceId=7&sTime=2024-05-09 13:15:11&eTime=2024-07-09 13:15:11
+GET /camera?deviceId=7&sTime=2024-05-09T13:15:11Z&eTime=2024-07-09T13:15:11Z
 ```
-- **설명**: 특정 장치의 카메라 데이터를 시간 범위 내에서 조회합니다.
-- **URL**: `{{SERVER_IP}}/honeybee/api/camera?deviceId=7&sTime=2024-05-09 13:15:11&eTime=2024-07-09 13:15:11`
+- **설명**: 특정 장치의 카메라 데이터를 지정된 시간 범위 내에서 조회합니다.
+- **URL**: `{{SERVER_IP}}/honeybee/api/camera?deviceId=7&sTime=2024-05-09T13:15:11Z&eTime=2024-07-09T13:15:11Z`
 - **메서드**: `GET`
+- **응답**:
+  - **200 OK**:
+    ```json
+    [
+      {
+        "id": 7,
+        "picture": "base64encodedstring",
+        "time": "2024-06-23T10:00:00Z"
+      },
+      {
+        "id": 8,
+        "picture": "base64encodedstring",
+        "time": "2024-06-23T11:00:00Z"
+      }
+    ]
+    ```
+  - **400 Bad Request**:
+    ```json
+    {
+      "message": "Bad Request: Missing required fields"
+    }
+    ```
+  - **500 Internal Server Error**:
+    ```json
+    {
+      "message": "Internal Server Error"
+    }
+    ```
 
 #### 출입 데이터 업로드
 ```
@@ -103,17 +306,38 @@ POST /upload
       "data": [
         {
           "id": 1,
-          "time": "2024-06-23 10:00:00",
+          "time": "2024-06-23T10:00:00Z",
           "inField": 10,
           "outField": 20
         },
+
+
         {
           "id": 2,
-          "time": "2024-06-23 11:00:00",
+          "time": "2024-06-23T11:00:00Z",
           "inField": 15,
           "outField": 25
         }
       ]
+    }
+    ```
+- **응답**:
+  - **201 Created**:
+    ```json
+    {
+      "message": "Data inserted successfully"
+    }
+    ```
+  - **400 Bad Request**:
+    ```json
+    {
+      "message": "Bad Request: Missing required fields"
+    }
+    ```
+  - **500 Internal Server Error**:
+    ```json
+    {
+      "message": "Internal Server Error"
     }
     ```
 
@@ -131,6 +355,25 @@ POST /uplink
       "type": 3,
       "inField": 10,
       "outField": 10
+    }
+    ```
+- **응답**:
+  - **201 Created**:
+    ```json
+    {
+      "message": "Data inserted successfully"
+    }
+    ```
+  - **400 Bad Request**:
+    ```json
+    {
+      "message": "Bad Request: Missing required fields"
+    }
+    ```
+  - **500 Internal Server Error**:
+    ```json
+    {
+      "message": "Internal Server Error"
     }
     ```
 
@@ -152,6 +395,25 @@ POST /uplink
       "weigh": 14
     }
     ```
+- **응답**:
+  - **201 Created**:
+    ```json
+    {
+      "message": "Data inserted successfully"
+    }
+    ```
+  - **400 Bad Request**:
+    ```json
+    {
+      "message": "Bad Request: Missing required fields"
+    }
+    ```
+  - **500 Internal Server Error**:
+    ```json
+    {
+      "message": "Internal Server Error"
+    }
+    ```
 
 #### 센서 데이터 업로드
 ```
@@ -167,7 +429,7 @@ POST /upload
       "data": [
         {
           "id": 10,
-          "time": "2024-06-23 10:00:00",
+          "time": "2024-06-23T10:00:00Z",
           "temp": 25.5,
           "humi": 60.0,
           "co2": 400,
@@ -175,13 +437,32 @@ POST /upload
         },
         {
           "id": 11,
-          "time": "2024-06-23 11:00:00",
+          "time": "2024-06-23T11:00:00Z",
           "temp": 26.0,
           "humi": 58.0,
           "co2": 410,
           "weigh": 51.0
         }
       ]
+    }
+    ```
+- **응답**:
+  - **201 Created**:
+    ```json
+    {
+      "message": "Data inserted successfully"
+    }
+    ```
+  - **400 Bad Request**:
+    ```json
+    {
+      "message": "Bad Request: Missing required fields"
+    }
+    ```
+  - **500 Internal Server Error**:
+    ```json
+    {
+      "message": "Internal Server Error"
     }
     ```
 

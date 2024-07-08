@@ -134,7 +134,8 @@ app.post('/api/uplink', async (req, res) => {
       return res.status(400).send('Bad Request: Invalid device Id or type');
     }
 
-    const time = new Date().toISOString().slice(0, 19).replace('T', ' '); // 현재 시간 설정
+    // timestamp를 mysql포맷으로 설정
+    const time = new Date().toISOString().slice(0, 19).replace('T', ' ');
 
     // 각 Type에 맞게 데이터 삽입
     if (type === deviceTypes.INOUT) {
@@ -202,7 +203,13 @@ app.post('/api/upload', upload.any(), async (req, res) => {
       return res.status(400).send('Bad Request: Unsupported content type');
     }
 
-    
+    // timestamp를 mysql포맷으로 변경
+    data.forEach(element => {
+      if (element.time) {
+        element.time = element.time.replace('T', ' ').replace('Z', '');
+      }
+    });
+
     // Get the original client IP from the X-Forwarded-For header
     const originalClientIp = req.headers['X-forwarded-for'];
     // Update device IP
@@ -243,7 +250,11 @@ app.post('/api/hive', async (req, res) => {
 
   try {
     const result = await database.addHive(dbConnection, areaId, name);
-    res.status(201).json(result); // 수정된 부분
+    if(result.existing) {
+      res.status(409).json({message: 'Hive already exists', hiveId: result.hiveId});
+    } else {
+      res.status(201).json({message: 'Hive added successfully', hiveId: result.hiveId});
+    }
   } catch (error) {
     console.error('Error adding hive:', error);
     res.status(500).send('Internal Server Error');
@@ -278,6 +289,11 @@ app.post('/api/device', async (req, res) => {
 
   try {
     const result = await database.addDevice(dbConnection, hiveId, typeId);
+    if(result.existing) {
+      res.status(409).json({message: 'Device already exists', deviceId: result.deviceId});
+    } else {
+      res.status(201).json({message: 'Device added successfully', deviceId: result.deviceId});
+    }
     res.status(201).json(result); // 수정된 부분
   } catch (error) {
     console.error('Error adding device:', error);
