@@ -5,25 +5,50 @@ const fs = require('fs');
 
 const API_URL = 'http://localhost:8090'; // API 기본 URL
 
-const registerHive = async (areaId, hiveId) => {
+// const registerHive = async (areaId, hiveId) => {
+//   try {
+//     const response = await axios.post(`${API_URL}/api/hive`, { areaId, name: `Hive ${hiveId}` });
+//     return response.data.hiveId;
+//   } catch (error) {
+//     console.error('Error registering hive:', error.response ? error.response.data : error.message);
+//     throw error;
+//   }
+// };
+
+// const registerDevice = async (hiveId) => {
+//   try {
+//     const response = await axios.post(`${API_URL}/api/device`, { hiveId, typeId: 2 });
+//     return response.data.deviceId;
+//   } catch (error) {
+//     console.error('Error registering device:', error.response ? error.response.data : error.message);
+//     throw error;
+//   }
+// };
+
+const registerHiveAndDevice = async (areaId, hiveId) => {
   try {
-    const response = await axios.post(`${API_URL}/api/hive`, { areaId, name: `Hive ${hiveId}` });
-    return response.data.hiveId;
+    // Register Hive
+    const responseHive = await axios.post(`${API_URL}/api/hive`, { areaId, name: `Hive ${hiveId}` }, {
+      validateStatus: function (status) {
+        return status === 201 || status === 409; // Resolve only if the status code is 201 or 409
+      }
+    });
+    const hiveDbId = responseHive.data.hiveId;
+
+    // Register Device
+    const responseDevice = await axios.post(`${API_URL}/api/device`, { hiveId: hiveDbId, typeId: 2 }, {
+      validateStatus: function (status) {
+        return status === 201 || status === 409; // Resolve only if the status code is 201 or 409
+      }
+    });
+    return responseDevice.data.deviceId;
+
   } catch (error) {
-    console.error('Error registering hive:', error.response ? error.response.data : error.message);
+    console.error('Error registering hive or device:', error.response ? error.response.data : error.message);
     throw error;
   }
 };
 
-const registerDevice = async (hiveId) => {
-  try {
-    const response = await axios.post(`${API_URL}/api/device`, { hiveId, typeId: 2 });
-    return response.data.deviceId;
-  } catch (error) {
-    console.error('Error registering device:', error.response ? error.response.data : error.message);
-    throw error;
-  }
-};
 
 const processFile = async (filePath, areaId) => {
   console.log(`Processing file: ${filePath} for area_id: ${areaId}`);
@@ -38,8 +63,7 @@ const processFile = async (filePath, areaId) => {
 
   try {
     // Hive 및 Device 등록
-    const hiveDbId = await registerHive(areaId, hiveId);
-    const deviceId = await registerDevice(hiveDbId);
+    const deviceId = await registerHiveAndDevice(areaId, hiveId);
 
     // 엑셀 파일 읽기
     const workbook = xlsx.readFile(filePath);

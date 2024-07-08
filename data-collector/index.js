@@ -10,11 +10,22 @@ function convertToMySQLDateTime(isoDate) {
 // Register Hive and Device if not already present
 const registerHiveAndDevice = async (hiveId) => {
   try {
-    const responseHive = await axios.post('http://172.17.0.1:8090/api/hive', { areaId: 1, name: `Hive ${hiveId}` });
+    // Register Hive
+    const responseHive = await axios.post('http://172.17.0.1:8090/api/hive', { areaId: 1, name: `Hive ${hiveId}` }, {
+      validateStatus: function (status) {
+        return status === 201 || status === 409; // Resolve only if the status code is 201 or 409
+      }
+    });
     const hiveDbId = responseHive.data.hiveId;
 
-    const responseDevice = await axios.post('http://172.17.0.1:8090/api/device', { hiveId: hiveDbId, typeId: 3 });
+    // Register Device
+    const responseDevice = await axios.post('http://172.17.0.1:8090/api/device', { hiveId: hiveDbId, typeId: 3 }, {
+      validateStatus: function (status) {
+        return status === 201 || status === 409; // Resolve only if the status code is 201 or 409
+      }
+    });
     return responseDevice.data.deviceId;
+
   } catch (error) {
     console.error('Error registering hive or device:', error.response ? error.response.data : error.message);
     throw error;
