@@ -1,12 +1,15 @@
 const express = require('express');
 const path = require('path');
-const axios = require('axios');
+const { createProxyMiddleware } = require('http-proxy-middleware');
 const app = express();
 const port = 80;
 
-const API_BASE_URL = 'http://172.17.0.1:8090/api';
+const API_BASE_URL = 'http://api:8090';
 
-app.use(express.json()); // JSON 본문 구문 분석을 위한 미들웨어
+// app.use(express.json()); // JSON 본문 구문 분석을 위한 미들웨어
+
+// const upload = multer(); // Multer 설정
+app.set('trust proxy', true);
 
 // Serve static files from the 'public' directory
 app.use('/honeybee', express.static(path.join(__dirname, 'public')));
@@ -23,38 +26,33 @@ honeybeeRouter.get('/view', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'view.html'));
 });
 
+// Route to serve the HTML view with query parameters
+honeybeeRouter.get('/test', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'test.html'));
+});
+
 // Route to serve the index page
 honeybeeRouter.get('/', (req, res) => {
   res.redirect('/honeybee/view');
 });
 
 // Proxy API requests to the backend API
-honeybeeRouter.use('/api', async (req, res) => {
-  const url = `${API_BASE_URL}${req.originalUrl.replace('/honeybee/api', '')}`;
-  console.log(`Proxying request to ${url}`);
-  
-  try {
-    const headers = { ...req.headers };
-    // 캐시 관련 헤더 제거
-    delete headers['if-modified-since'];
-    delete headers['if-none-match'];
-
-    const response = await axios({
-      method: req.method,
-      url,
-      data: req.body,
-      headers: headers
-    });
-    res.status(response.status).json(response.data);
-  } catch (error) {
-    console.error(`Error proxying request to ${url}:`, error.message);
-    if (error.response) {
-      res.status(error.response.status).send(error.response.data);
-    } else {
-      res.status(500).send('Internal Server Error');
-    }
+honeybeeRouter.use('/api', createProxyMiddleware({
+  target: API_BASE_URL,
+  changeOrigin: true,
+  pathRewrite: {
+    '^/honeybee/api': 'api', // '/honeybee/api'를 '/api'로 변경
+  },
+  onProxyReq: (proxyReq, req, res) => {
+    // Add original client IP to X-Forwarded-For header
+    const clientIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress;
+    proxyReq.setHeader('X-Forwarded-For', clientIp);
+  },
+  onError: (err, req, res) => {
+    console.error(`Error proxying request to ${API_BASE_URL}${req.originalUrl}:`, err.message);
+    return res.status(500).send('Internal Server Error');
   }
-});
+}));
 
 // Use /honeybee as the base path for the honeybeeRouter
 app.use('/honeybee', honeybeeRouter);

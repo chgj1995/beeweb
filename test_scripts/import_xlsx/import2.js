@@ -5,22 +5,46 @@ const fs = require('fs');
 
 const API_URL = 'http://localhost:8090'; // API 기본 URL
 
-const registerHive = async (areaId, hiveId) => {
-  try {
-    const response = await axios.post(`${API_URL}/api/hive`, { areaId, name: `Hive ${hiveId}` });
-    return response.data.hiveId;
-  } catch (error) {
-    console.error('Error registering hive:', error.response ? error.response.data : error.message);
-    throw error;
-  }
-};
+// const registerHive = async (areaId, hiveId) => {
+//   try {
+//     const response = await axios.post(`${API_URL}/api/hive`, { areaId, name: `Hive ${hiveId}` });
+//     return response.data.hiveId;
+//   } catch (error) {
+//     console.error('Error registering hive:', error.response ? error.response.data : error.message);
+//     throw error;
+//   }
+// };
 
-const registerDevice = async (hiveId) => {
+// const registerDevice = async (hiveId) => {
+//   try {
+//     const response = await axios.post(`${API_URL}/api/device`, { hiveId, typeId: 2 });
+//     return response.data.deviceId;
+//   } catch (error) {
+//     console.error('Error registering device:', error.response ? error.response.data : error.message);
+//     throw error;
+//   }
+// };
+
+const registerHiveAndDevice = async (areaId, hiveId) => {
   try {
-    const response = await axios.post(`${API_URL}/api/device`, { hiveId, typeId: 2 });
-    return response.data.deviceId;
+    // Register Hive
+    const responseHive = await axios.post(`${API_URL}/api/hive`, { areaId, name: `Hive ${hiveId}` }, {
+      validateStatus: function (status) {
+        return status === 201 || status === 409; // Resolve only if the status code is 201 or 409
+      }
+    });
+    const hiveDbId = responseHive.data.hiveId;
+
+    // Register Device
+    const responseDevice = await axios.post(`${API_URL}/api/device`, { hiveId: hiveDbId, typeId: 2 }, {
+      validateStatus: function (status) {
+        return status === 201 || status === 409; // Resolve only if the status code is 201 or 409
+      }
+    });
+    return responseDevice.data.deviceId;
+
   } catch (error) {
-    console.error('Error registering device:', error.response ? error.response.data : error.message);
+    console.error('Error registering hive or device:', error.response ? error.response.data : error.message);
     throw error;
   }
 };
@@ -62,8 +86,7 @@ const processSensorFile = async (filePath, areaId) => {
 
       if (hiveId !== null) {
         if (!hiveDeviceMap[hiveId]) {
-          hiveDeviceMap[hiveId] = await registerHive(areaId, hiveId);
-          hiveDeviceMap[hiveId] = await registerDevice(hiveDeviceMap[hiveId]);
+          hiveDeviceMap[hiveId] = await registerHiveAndDevice(areaId, hiveId);
         }
         const deviceId = hiveDeviceMap[hiveId];
 

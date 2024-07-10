@@ -154,8 +154,8 @@ async function fetchAndRenderCharts(urlParams) {
     const twoMonthAgo = new Date();
     twoMonthAgo.setMonth(now.getMonth() - 2);
   
-    const defaultSTime = twoMonthAgo.toISOString().slice(0, 19).replace('T', ' ');
-    const defaultETime = now.toISOString().slice(0, 19).replace('T', ' ');
+    const defaultSTime = twoMonthAgo.toISOString();
+    const defaultETime = now.toISOString();
     
     sTime = sTime || defaultSTime;
     eTime = eTime || defaultETime;

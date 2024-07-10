@@ -6,9 +6,8 @@ const database = require('./db');
 const app = express();
 const port = 8090;
 
-// Multer configuration for handling file uploads
-const storage = multer.memoryStorage(); // Store files in memory for processing
-const upload = multer({ storage: storage });
+// Multer 설정
+const upload = multer(); // Multer 설정
 
 // TODO: 타입 위치 관련
 // DB에서 조회하던지,
@@ -21,10 +20,10 @@ const deviceTypes = {
   'INOUT': 3,
 };
 
-app.use(bodyParser.json());
-
 // DB 연결 설정
 const dbConnection = database.createDbConnection();
+
+app.use(bodyParser.json());
 
 // =============================
 // AREA & HIVE
@@ -35,7 +34,7 @@ app.get('/api/areahive', async (req, res) => {
     res.json(data);
   } catch (error) {
     console.error('Error fetching areas and hives:', error);
-    res.status(500).send('Internal Server Error');
+    return res.status(500).send('Internal Server Error');
   }
 });
 
@@ -54,7 +53,7 @@ app.get('/api/inout', async (req, res) => {
     res.json(data);
   } catch (error) {
     console.error('Error fetching inout data:', error);
-    res.status(500).send('Internal Server Error');
+    return res.status(500).send('Internal Server Error');
   }
 });
 
@@ -73,7 +72,7 @@ app.get('/api/sensor', async (req, res) => {
     res.json(data);
   } catch (error) {
     console.error('Error fetching sensor data:', error);
-    res.status(500).send('Internal Server Error');
+    return res.status(500).send('Internal Server Error');
   }
 });
 
@@ -92,7 +91,7 @@ app.get('/api/camera', async (req, res) => {
     res.json(data);
   } catch (error) {
     console.error('Error fetching camera data:', error);
-    res.status(500).send('Internal Server Error');
+    return res.status(500).send('Internal Server Error');
   }
 });
 
@@ -134,7 +133,8 @@ app.post('/api/uplink', async (req, res) => {
       return res.status(400).send('Bad Request: Invalid device Id or type');
     }
 
-    const time = new Date().toISOString().slice(0, 19).replace('T', ' '); // 현재 시간 설정
+    // timestamp를 mysql포맷으로 설정
+    const time = new Date().toISOString().slice(0, 19).replace('T', ' ');
 
     // 각 Type에 맞게 데이터 삽입
     if (type === deviceTypes.INOUT) {
@@ -142,81 +142,98 @@ app.post('/api/uplink', async (req, res) => {
       if (inField == null || outField == null) {
         return res.status(400).send('Bad Request: Missing required fields');
       }
-      await handleInOutData([{ id, time, inField, outField }], dbConnection);
-      res.status(201).send('Data inserted successfully');
+      await handleInOutData(dbConnection, [{ id, time, inField, outField }]);
+      return res.status(201).send('Data inserted successfully');
     } else if (type === deviceTypes.SENSOR) {
       const { temp, humi, co2, weigh } = req.body;
       if (temp == null && humi == null && co2 == null && weigh == null) {
         return res.status(400).send('Bad Request: Missing required fields');
       }
-      await handleSensorData([{ id, time, temp, humi, co2, weigh }], dbConnection);
-      res.status(201).send('Data inserted successfully');
+      await handleSensorData(dbConnection, [{ id, time, temp, humi, co2, weigh }]);
+      return res.status(201).send('Data inserted successfully');
     } else {
       return res.status(400).send('Bad Request: Invalid device type');
     }
     
   } catch (error) {
     console.error('Error processing uplink:', error);
-    res.status(500).send('Internal Server Error');
+    return res.status(500).send('Internal Server Error');
   }
 });
 
 // POST route to handle uploads
-app.post('/api/upload', upload.fields([{ name: 'files' }, { name: 'metadata' }]), async (req, res) => {
+app.post('/api/upload', upload.any(), async (req, res) => {
   try {
-      let type;
-      let data;
-      let files = req.files ? req.files['files'] : null;
+    let type;
+    let data = [];
+    if (req.is('multipart/form-data')) {
+      let files = req.files.filter(file => file.fieldname.startsWith('file'));
+      // Handle multipart/form-data
+      type = req.body.type;
 
-      if (req.is('multipart/form-data')) {
-          // Handle multipart/form-data
-          type = req.body.type;
-          data = JSON.parse(req.body.metadata);
+      // Extract metadata from the request
+      const metadata = files.map((file, index) => ({
+        id: req.body[`file${index + 1}_id`],
+        time: req.body[`file${index + 1}_time`],
+        file: file
+      }));
 
-          if (!type || !files || files.length === 0 || !Array.isArray(data)) {
-              return res.status(400).send('Bad Request: Missing required fields or data');
-          }
-
-          // Process each file and corresponding data
-          data = data.map((item, index) => ({
-              id: item.id,
-              time: item.time,
-              picture: files[index].buffer
-          }));
-      } else if (req.is('application/json')) {
-          // Handle application/json
-          type = req.body.type;
-          data = req.body.data;
-
-          if (!type || !Array.isArray(data) || data.length === 0) {
-              return res.status(400).send('Bad Request: Missing required fields or data');
-          }
-      } else {
-          return res.status(400).send('Bad Request: Unsupported content type');
+      if (!type || !files || files.length === 0 || metadata.some(item => !item.id || !item.time)) {
+        console.log(type, files, metadata);
+        return res.status(400).send('Bad Request: Missing required fields or data');
       }
 
+      // Process each file and corresponding data
+      data = metadata.map((item, index) => ({
+        id: item.id,
+        time: item.time,
+        picture: item.file.buffer
+      }));
 
-      // Get the original client IP from the X-Forwarded-For header
-      const originalClientIp = req.headers['x-forwarded-for'] || req.ip;
-      // Update device IP
-      await database.updateDeviceIP(dbConnection, data, originalClientIp);
+    } else if (req.is('application/json')) {
+      // Handle application/json
+      type = req.body.type;
+      data = req.body.data;
 
-      // Handle different types of data
-      if (type === deviceTypes.INOUT) {
-          await handleInOutData(dbConnection, data);
-      } else if (type === deviceTypes.SENSOR) {
-          await handleSensorData(dbConnection, data);
-      } else if (type === deviceTypes.CAMERA) {
-          await handleCameraData(dbConnection, data);
-      } else {
-          return res.status(400).send('Bad Request: Invalid device type');
+      if (!type || !Array.isArray(data) || data.length === 0) {
+        return res.status(400).send('Bad Request: Missing required fields or data');
       }
+    } else {
+      return res.status(400).send('Bad Request: Unsupported content type');
+    }
 
-      res.status(201).send('Data inserted successfully');
+    // timestamp를 mysql포맷으로 변경
+    data.forEach(element => {
+      if (element.time) {
+        element.time = element.time.replace('T', ' ').replace('Z', '');
+      }
+    });
+
+    // Get the original client IP from the x-Forwarded-For header
+    const originalClientIp = req.headers['x-forwarded-for'];
+
+    // Update device IP
+    await database.updateDeviceIP(dbConnection, data, originalClientIp);
+
+    // Handle different types of data
+    if (type == deviceTypes.INOUT) {
+      await handleInOutData(dbConnection, data);
+    } else if (type == deviceTypes.SENSOR) {
+      await handleSensorData(dbConnection, data);
+    } else if (type == deviceTypes.CAMERA) {
+      await handleCameraData(dbConnection, data);
+    } else {
+      return res.status(400).send('Bad Request: Invalid device type');
+    }
+    return res.status(201).send('Data inserted successfully');
   } catch (error) {
-      console.error('Error processing upload:', error);
-      res.status(500).send('Internal Server Error');
+    console.error('Error processing upload:', error);
+    return res.status(500).send('Internal Server Error');
   }
+});
+
+app.listen(3000, () => {
+  console.log('Backend server is running on port 3000');
 });
 
 
@@ -233,10 +250,14 @@ app.post('/api/hive', async (req, res) => {
 
   try {
     const result = await database.addHive(dbConnection, areaId, name);
-    res.status(201).json(result); // 수정된 부분
+    if(result.existing) {
+      return res.status(409).json({message: 'Hive already exists', hiveId: result.hiveId});
+    } else {
+      return res.status(201).json({message: 'Hive added successfully', hiveId: result.hiveId});
+    }
   } catch (error) {
     console.error('Error adding hive:', error);
-    res.status(500).send('Internal Server Error');
+    return res.status(500).send('Internal Server Error');
   }
 });
 
@@ -252,10 +273,10 @@ app.get('/api/device', async (req, res) => {
 
   try {
     const devices = await database.getDevicesByHiveId(dbConnection, hiveId);
-    res.status(200).json(devices);
+    return res.status(200).json(devices);
   } catch (error) {
     console.error('Error fetching devices:', error);
-    res.status(500).send('Internal Server Error');
+    return res.status(500).send('Internal Server Error');
   }
 });
 
@@ -268,10 +289,14 @@ app.post('/api/device', async (req, res) => {
 
   try {
     const result = await database.addDevice(dbConnection, hiveId, typeId);
-    res.status(201).json(result); // 수정된 부분
+    if(result.existing) {
+      return res.status(409).json({message: 'Device already exists', deviceId: result.deviceId});
+    } else {
+      return res.status(201).json({message: 'Device added successfully', deviceId: result.deviceId});
+    }
   } catch (error) {
     console.error('Error adding device:', error);
-    res.status(500).send('Internal Server Error');
+    return res.status(500).send('Internal Server Error');
   }
 });
 
