@@ -1,2 +1,2 @@
-# .gitattributes 파일 생성 또는 수정
-* text=auto
+# 모든 .sh 파일이 LF 줄 끝을 유지하도록 합니다.
+*.sh text eol=lf
