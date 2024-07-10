@@ -212,6 +212,11 @@ app.post('/api/upload', upload.any(), async (req, res) => {
 
     // Get the original client IP from the X-Forwarded-For header
     const originalClientIp = req.headers['X-forwarded-for'];
+
+    console.log(`x-forwarded-for: ${req.headers['x-forwarded-for']}`);
+    console.log(`X-forwarded-for: ${req.headers['X-forwarded-for']}`);
+    console.log(`socket.remoteAddress: ${req.socket.remoteAddress}`);
+
     // Update device IP
     await database.updateDeviceIP(dbConnection, data, originalClientIp);
 

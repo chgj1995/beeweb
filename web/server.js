@@ -46,6 +46,11 @@ honeybeeRouter.use('/api', createProxyMiddleware({
   onProxyReq: (proxyReq, req, res) => {
     const ipcheck = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress;
     console.log('Client IP:', ipcheck);
+    console.log(`x-forwarded-for: ${req.headers['x-forwarded-for']}`);
+    console.log(`remoteAddress: ${req.connection.remoteAddress}`);
+    console.log(`socket.remoteAddress: ${req.socket.remoteAddress}`);
+    
+
     // Add original client IP to X-Forwarded-For header
     // const clientIp = req.headers['X-Forwarded-For'] || req.connection.remoteAddress;
     proxyReq.setHeader('X-Forwarded-For', ipcheck);
