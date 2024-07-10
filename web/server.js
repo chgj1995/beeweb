@@ -44,6 +44,7 @@ honeybeeRouter.use('/api', createProxyMiddleware({
     '^/honeybee/api': 'api', // '/honeybee/api'를 '/api'로 변경
   },
   onProxyReq: (proxyReq, req, res) => {
+    console.log(req);
     // Add original client IP to X-Forwarded-For header
     const clientIp = req.headers['X-Forwarded-For'] || req.connection.remoteAddress;
     proxyReq.setHeader('X-Forwarded-For', clientIp);
