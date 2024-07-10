@@ -11,48 +11,41 @@ header {
     padding: 0.5rem;
     text-align: center;
 }
+.time-selector {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+    background: #f9f9f9;
+}
+.time-selector button {
+    margin: 0 0.5rem;
+}
 .container {
     display: flex;
-    flex: 1;
-}
-.left {
-    flex: 1;
-    display: flex;
     flex-direction: column;
-}
-.right {
     flex: 1;
-    display: flex;
-    flex-direction: column;
 }
-.map-container {
-    flex: 3;
-    background: #e4e4e4;
-    margin-bottom: 1rem;
-}
-.search-container {
-    flex: 2;
-    background: #f9f9f9;
-    padding: 1rem;
-    position: relative;
-}
+
 .dropdown {
     position: relative;
-    width: 100%;
 }
+
+.dropdown-placeholder-container {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
 .dropdown-content {
     display: none;
     position: absolute;
+    width: 100%; /* 부모 요소의 너비를 100%로 설정 */
     background-color: #f9f9f9;
     box-shadow: 0 8px 16px rgba(0,0,0,0.2);
     z-index: 1;
-    width: 100%;
-    top: 100%;
-    left: 0;
-    margin: 0;
-    padding: 0;
 }
-
 .dropdown-content.show {
     display: block;
 }
@@ -70,19 +63,62 @@ header {
     background-color: #f1f1f1;
 }
 
-.graph1, .graph2, .graph3 {
+.dropdown-container {
+    display: flex;
+    flex-direction: column;
     flex: 1;
-    background: #d4d4d4;
-    margin-bottom: 1rem;
 }
-.graph1, .graph2 {
-    margin-bottom: 1rem;
+.dropdown {
+    width: 100%;
+    margin-bottom: 10px;
 }
-.graph {
+.map-container {
+    width: 100%;
+    height: 300px; /* 차트와 동일한 높이로 설정 */
+}
+.placeholder {
+    flex: 1;
+    height: 310px; /* 드롭다운과 맵과 동일한 높이로 설정 */
+}
+.chart-grid {
+    display: flex;
+    flex-wrap: wrap;
     padding: 1rem;
-    background: #fff;
-    margin: 0.5rem;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    justify-content: space-between;
+}
+.chart-block {
+    display: flex;
+    flex-direction: row;
+    flex: 1 1 calc(50% - 10px);
+    margin-bottom: 20px;
+    box-sizing: border-box;
+}
+.slider-container {
+    width: 10%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+.slider-container div {
+    height: 300px;
+}
+.chart-container {
+    flex: 1;
+}
+canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+}
+.noUi-tooltip {
+    display: none !important; /* 툴팁을 숨깁니다 */
+}
+.noUi-vertical .noUi-handle {
+    width: 20px !important;
+    height: 20px !important;
+    left: -10px !important;
+    bottom: -10px !important;
 }
 footer {
     background: #fcefb4;
@@ -90,8 +126,6 @@ footer {
     text-align: center;
     padding: 1rem;
 }
-
-/* 14 */
 .btn-14 {
     background: rgb(255,151,0);
     border: none;
@@ -99,8 +133,8 @@ footer {
     position: relative; /* 추가: ::after 가 올바르게 작동하도록 */
     border-radius: 5px; /* 모서리를 둥글게 */
     font-family: Arial, sans-serif; /* 글씨체 변경 */
-  }
-  .btn-14:after {
+}
+.btn-14:after {
     position: absolute;
     content: "";
     width: 100%;
@@ -115,34 +149,31 @@ footer {
                 7px 7px 20px 0px rgba(0,0,0,.1),
                 4px 4px 5px 0px rgba(0,0,0,.1);
     transition: all 0.3s ease;
-  }
-  .btn-14:hover {
+}
+.btn-14:hover {
     color: #000;
-  }
-  .btn-14:hover:after {
+}
+.btn-14:hover:after {
     top: auto;
     bottom: 0;
     height: 100%;
-  }
-  .btn-14:active {
+}
+.btn-14:active {
     top: 2px;
-  }
-  
-
-  @import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700&family=Roboto:wght@900&display=swap');
-  .nanum-gothic-regular {
+}
+@import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700&family=Roboto:wght@900&display=swap');
+.nanum-gothic-regular {
     font-family: "Nanum Gothic", sans-serif;
     font-weight: 400;
     font-style: normal;
-  }
-  .nanum-gothic-bold {
+}
+.nanum-gothic-bold {
     font-family: "Nanum Gothic", sans-serif;
     font-weight: 700;
     font-style: normal;
-  }
-  
-  .roboto-black {
+}
+.roboto-black {
     font-family: "Roboto", sans-serif;
     font-weight: 900;
     font-style: normal;
-  }
+}
