@@ -48,7 +48,9 @@ services:
       dockerfile: Dockerfile
     depends_on:
       - api
-    expose:
+    # expose:
+    #   - "3000:3000"
+    ports:
       - "80:80"
     restart: always
 
