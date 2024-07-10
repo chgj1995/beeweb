@@ -5,26 +5,6 @@ const fs = require('fs');
 
 const API_URL = 'http://localhost:8090'; // API 기본 URL
 
-// const registerHive = async (areaId, hiveId) => {
-//   try {
-//     const response = await axios.post(`${API_URL}/api/hive`, { areaId, name: `Hive ${hiveId}` });
-//     return response.data.hiveId;
-//   } catch (error) {
-//     console.error('Error registering hive:', error.response ? error.response.data : error.message);
-//     throw error;
-//   }
-// };
-
-// const registerDevice = async (hiveId) => {
-//   try {
-//     const response = await axios.post(`${API_URL}/api/device`, { hiveId, typeId: 2 });
-//     return response.data.deviceId;
-//   } catch (error) {
-//     console.error('Error registering device:', error.response ? error.response.data : error.message);
-//     throw error;
-//   }
-// };
-
 const registerHiveAndDevice = async (areaId, hiveId) => {
   try {
     // Register Hive
