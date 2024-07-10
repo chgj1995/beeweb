@@ -44,16 +44,9 @@ honeybeeRouter.use('/api', createProxyMiddleware({
     '^/honeybee/api': 'api', // '/honeybee/api'를 '/api'로 변경
   },
   onProxyReq: (proxyReq, req, res) => {
-    const ipcheck = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress;
-    console.log('Client IP:', ipcheck);
-    console.log(`x-forwarded-for: ${req.headers['x-forwarded-for']}`);
-    console.log(`remoteAddress: ${req.connection.remoteAddress}`);
-    console.log(`socket.remoteAddress: ${req.socket.remoteAddress}`);
-    
-
     // Add original client IP to X-Forwarded-For header
-    // const clientIp = req.headers['X-Forwarded-For'] || req.connection.remoteAddress;
-    proxyReq.setHeader('X-Forwarded-For', ipcheck);
+    const clientIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress;
+    proxyReq.setHeader('X-Forwarded-For', clientIp);
   },
   onError: (err, req, res) => {
     console.error(`Error proxying request to ${API_BASE_URL}${req.originalUrl}:`, err.message);
