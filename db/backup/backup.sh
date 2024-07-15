@@ -3,10 +3,6 @@
 # 스크립트의 실제 경로 추적
 SCRIPT_DIR=$(dirname $(realpath $0))
 
-# 스크립트 소유자의 사용자 ID와 그룹 ID 가져오기
-SCRIPT_USER_ID=$(stat -c "%u" "$0")
-SCRIPT_GROUP_ID=$(stat -c "%g" "$0")
-
 # 현재 날짜를 YYYYMMDD 형식으로 저장
 BACKUP_DATE=$(date +"%Y%m%d")
 
@@ -28,8 +24,6 @@ echo "SCRIPT_DIR: $SCRIPT_DIR"
 echo "BACKUP_FILE: $BACKUP_FILE"
 echo "HOST_BACKUP_FILE: $HOST_BACKUP_FILE"
 echo "CONTAINER_ID: $CONTAINER_ID"
-echo "SCRIPT_USER_ID: $SCRIPT_USER_ID"
-echo "SCRIPT_GROUP_ID: $SCRIPT_GROUP_ID"
 
 # 컨테이너가 존재하는지 확인
 if [ -z "$CONTAINER_ID" ]; then
@@ -53,20 +47,13 @@ if [ $EXEC_STATUS -eq 0 ]; then
   
   if [ $COPY_STATUS -eq 0 ]; then
     echo "Backup successful: $HOST_BACKUP_FILE"
-    
-    # 파일 소유자 변경
-    sudo chown $SCRIPT_USER_ID:$SCRIPT_GROUP_ID $HOST_BACKUP_FILE $ERROR_LOG
 
     # 최신 10개의 백업 파일만 유지하고 나머지는 삭제
-    ls -1t $HOST_BACKUP_DIR/hive_data_backup_*.sql | tail -n +11 | xargs -I {} sudo rm -- {}
+    ls -1t $HOST_BACKUP_DIR/hive_data_backup_*.sql | tail -n +11 | xargs -I {} rm -- {}
   else
     echo "Backup copy failed"
   fi
 else
   echo "Backup failed"
   echo "Check the log file for more details: $ERROR_LOG"
-  echo "Docker exec status code: $EXEC_STATUS"
-  
-  # 로그 파일 소유자 변경
-  sudo chown $SCRIPT_USER_ID:$SCRIPT_GROUP_ID $ERROR_LOG
 fi
