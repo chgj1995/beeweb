@@ -54,11 +54,11 @@ if [ $EXEC_STATUS -eq 0 ]; then
   if [ $COPY_STATUS -eq 0 ]; then
     echo "Backup successful: $HOST_BACKUP_FILE"
     
-    # 백업 파일과 로그 파일 소유자 변경
-    chown $SCRIPT_USER_ID:$SCRIPT_GROUP_ID $HOST_BACKUP_FILE $ERROR_LOG
+    # 파일 소유자 변경
+    sudo chown $SCRIPT_USER_ID:$SCRIPT_GROUP_ID $HOST_BACKUP_FILE $ERROR_LOG
 
     # 최신 10개의 백업 파일만 유지하고 나머지는 삭제
-    ls -1t $HOST_BACKUP_DIR/hive_data_backup_*.sql | tail -n +11 | xargs -I {} rm -- {}
+    ls -1t $HOST_BACKUP_DIR/hive_data_backup_*.sql | tail -n +11 | xargs -I {} sudo rm -- {}
   else
     echo "Backup copy failed"
   fi
@@ -68,5 +68,5 @@ else
   echo "Docker exec status code: $EXEC_STATUS"
   
   # 로그 파일 소유자 변경
-  chown $SCRIPT_USER_ID:$SCRIPT_GROUP_ID $ERROR_LOG
+  sudo chown $SCRIPT_USER_ID:$SCRIPT_GROUP_ID $ERROR_LOG
 fi
