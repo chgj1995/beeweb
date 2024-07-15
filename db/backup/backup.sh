@@ -36,7 +36,7 @@ fi
 docker exec $CONTAINER_ID mkdir -p $CONTAINER_BACKUP_DIR
 
 # Docker 컨테이너에서 백업 명령 실행 및 오류 로그 캡처
-docker exec $CONTAINER_ID sh -c "mysqldump -u root -prootpassword hive_data > $BACKUP_FILE" 2> $ERROR_LOG
+docker exec $CONTAINER_ID sh -c "mysqldump --column-statistics=0 -u root -prootpassword hive_data > $BACKUP_FILE" 2> $ERROR_LOG
 EXEC_STATUS=$?
 
 # 백업이 성공했는지 확인
@@ -47,6 +47,9 @@ if [ $EXEC_STATUS -eq 0 ]; then
   
   if [ $COPY_STATUS -eq 0 ]; then
     echo "Backup successful: $HOST_BACKUP_FILE"
+
+    # 최신 10개의 백업 파일만 유지하고 나머지는 삭제
+    ls -1t $HOST_BACKUP_DIR/hive_data_backup_*.sql | tail -n +11 | xargs -I {} rm -- {}
   else
     echo "Backup copy failed"
   fi
