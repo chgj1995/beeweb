@@ -19,6 +19,6 @@ CRON_JOBS=$(sudo crontab -l 2>/dev/null)
 if echo "$CRON_JOBS" | grep -q "$SCRIPT_DIR/backup.sh"; then
   echo "Cron job already exists."
 else
-  (sudo crontab -l 2>/dev/null; echo "* * * * * $SCRIPT_DIR/backup.sh >> /home/wcl/workspace/beeweb/db/backup/data/backup_cron.log 2>&1") | sudo crontab -
+  (sudo crontab -l 2>/dev/null; echo "0 2 * * * $SCRIPT_DIR/backup.sh >> /home/wcl/workspace/beeweb/db/backup/data/backup_cron.log 2>&1") | sudo crontab -
   echo "Cron job installed to run backup.sh daily at 2 AM."
 fi
