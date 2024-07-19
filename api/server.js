@@ -240,6 +240,21 @@ app.listen(3000, () => {
 // =============================
 // HIVE
 // =============================
+app.get('/api/hive', async (req, res) => {
+  const { areaId } = req.query;
+
+  if (!areaId) {
+    return res.status(400).send('Bad Request: Missing areaId');
+  }
+
+  try {
+    const hives = await database.getHivesByAreaId(dbConnection, areaId);
+    return res.status(200).json(hives);
+  } catch (error) {
+    console.error('Error fetching hives:', error);
+    return res.status(500).send('Internal Server Error');
+  }
+});
 
 app.post('/api/hive', async (req, res) => {
   const { areaId, name } = req.body;
@@ -257,6 +272,26 @@ app.post('/api/hive', async (req, res) => {
     }
   } catch (error) {
     console.error('Error adding hive:', error);
+    return res.status(500).send('Internal Server Error');
+  }
+});
+
+app.delete('/api/hive', async (req, res) => {
+  const { hiveId } = req.query;
+
+  if (!hiveId) {
+    return res.status(400).send('Bad Request: Missing hiveId');
+  }
+
+  try {
+    const result = await database.deleteHive(dbConnection, hiveId);
+    if(result.deleted) {
+      return res.status(200).json({message: 'Hive deleted successfully', hiveId: result.hiveId});
+    } else {
+      return res.status(404).json({message: 'Hive not found', hiveId: result.hiveId});
+    }
+  } catch (error) {
+    console.error('Error deleting hive:', error);
     return res.status(500).send('Internal Server Error');
   }
 });
@@ -296,6 +331,26 @@ app.post('/api/device', async (req, res) => {
     }
   } catch (error) {
     console.error('Error adding device:', error);
+    return res.status(500).send('Internal Server Error');
+  }
+});
+
+app.delete('/api/device', async (req, res) => {
+  const { deviceId } = req.query;
+
+  if (!deviceId) {
+    return res.status(400).send('Bad Request: Missing deviceId');
+  }
+
+  try {
+    const result = await database.deleteDevice(dbConnection, deviceId);
+    if(result.deleted) {
+      return res.status(200).json({message: 'Device deleted successfully', deviceId: result.deviceId});
+    } else {
+      return res.status(404).json({message: 'Device not found', deviceId: result.deviceId});
+    }
+  } catch (error) {
+    console.error('Error deleting device:', error);
     return res.status(500).send('Internal Server Error');
   }
 });

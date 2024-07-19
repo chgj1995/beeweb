@@ -66,7 +66,8 @@ const getAreasAndHives = (connection) => {
             });
 
             const areas = Object.values(areasMap);
-            resolve(areas);
+            console.log(`Fetched ${areas.length} areas and ${results.length} hives`);
+            return resolve(areas);
         });
     });
 };
@@ -83,7 +84,8 @@ const getDevicesByHiveId = (connection, hiveId) => {
                 console.error('Error fetching devices:', error);
                 return reject(error);
             }
-            resolve(results.map(device => ({ id: device.id, type: device.type_id })));
+            console.log(`Fetched ${results.length} devices for hive ${hiveId}`);
+            return resolve(results.map(device => ({ id: device.id, type: device.type_id })));
         });
     });
 };
@@ -96,7 +98,8 @@ const checkDevice = (connection, id, type) => {
                 console.error('Error checking device:', error);
                 return reject(error);
             }
-            resolve(results);
+            console.log(`Checked device: ${id} (type: ${type})`);
+            return resolve(results);
         });
     });
 };
@@ -125,7 +128,7 @@ const processBatch = async (connection, query, data, batchSize) => {
                     console.error('Error processing batch:', error);
                     return reject(error);
                 }
-                resolve(results);
+                return resolve(results);
             });
         });
         totalProcessedCount += batch.length;
@@ -173,7 +176,8 @@ const getInOutDataByDeviceAndTimeRange = (connection, deviceId, sTime, eTime) =>
                 console.error('Error fetching inout_data:', error.sqlMessage || error);
                 return reject(error);
             }
-            resolve(results);
+            console.log(`Fetched ${results.length} rows of inout data for device ${deviceId}`);
+            return resolve(results);
         });
     });
 };
@@ -229,7 +233,8 @@ const getSensorDataByDeviceAndTimeRange = (connection, deviceId, sTime, eTime) =
                 console.error('Error fetching sensor_data:', error);
                 return reject(error);
             }
-            resolve(results);
+            console.log(`Fetched ${results.length} rows of sensor data for device ${deviceId}`);
+            return resolve(results);
         });
     });
 };
@@ -283,7 +288,8 @@ const getCameraDataByDeviceAndTimeRange = (connection, deviceId, sTime, eTime) =
                 console.error('Error fetching camera_data:', error);
                 return reject(error);
             }
-            resolve(results);
+            console.log(`Fetched ${results.length} rows of camera data for device ${deviceId}`);
+            return resolve(results);
         });
     });
 };
@@ -313,6 +319,20 @@ const insertCameraData = async (connection, data) => {
 // =============================
 // HIVE
 // =============================
+const getHivesByAreaId = (connection, areaId) => {
+    return new Promise((resolve, reject) => {
+        const query = 'SELECT id, name FROM hives WHERE area_id = ?';
+        connection.query(query, [areaId], (error, results) => {
+            if (error) {
+                console.error('Error fetching hives:', error);
+                return reject(error);
+            }
+            console.log(`Fetched ${results.length} hives for area ${areaId}`);
+            return resolve(results);
+        });
+    });
+};
+
 const addHive = (connection, areaId, name) => {
     return new Promise((resolve, reject) => {
         // 먼저 중복 체크
@@ -324,7 +344,8 @@ const addHive = (connection, areaId, name) => {
             }
             if (checkResults.length > 0) {
                 // 이미 존재하는 경우
-                resolve({ existing: true, hiveId: checkResults[0].id });
+                console.log(`Hive already exists: ${checkResults[0].id} (area: ${areaId}, name: ${name})`);
+                return resolve({ existing: true, hiveId: checkResults[0].id });
             } else {
                 // 존재하지 않으면 새로 삽입
                 const insertQuery = 'INSERT INTO hives (area_id, name) VALUES (?, ?)';
@@ -333,13 +354,31 @@ const addHive = (connection, areaId, name) => {
                         console.error('Error adding hive:', insertError);
                         return reject(insertError);
                     }
-                    resolve({ existing: false, hiveId: insertResults.insertId });
+                    console.log(`Inserted hive: ${insertResults.insertId} (area: ${areaId}, name: ${name})`);
+                    return resolve({ existing: false, hiveId: insertResults.insertId });
                 });
             }
         });
     });
 };
 
+const deleteHive = (connection, hiveId) => {
+    return new Promise((resolve, reject) => {
+        const query = 'DELETE FROM hives WHERE id = ?';
+        connection.query(query, [hiveId], (error, results) => {
+            if (error) {
+                console.error('Error deleting hive:', error);
+                return reject(error);
+            }
+            if(results.affectedRows === 0) {
+                console.log(`Hive not found: ${hiveId}`);
+                return resolve({ deleted: false, hiveId: hiveId });
+            }
+            console.log(`Deleted hive: ${hiveId}`);
+            return resolve({ deleted: true, hiveId: hiveId});
+        });
+    });
+};
 
 // =============================
 // DEVICE
@@ -361,7 +400,8 @@ const addDevice = (connection, hiveId, typeId) => {
             }
             if (checkResults.length > 0) {
                 // 이미 존재하는 경우
-                resolve({ existing: true, deviceId: checkResults[0].id });
+                console.log(`Device already exists: ${checkResults[0].id} (hive: ${hiveId}, type: ${typeId})`);
+                return resolve({ existing: true, deviceId: checkResults[0].id });
             } else {
                 // 존재하지 않으면 새로 삽입
                 const insertQuery = 'INSERT INTO devices (hive_id, type_id) VALUES (?, ?)';
@@ -370,12 +410,33 @@ const addDevice = (connection, hiveId, typeId) => {
                         console.error('Error adding device:', insertError);
                         return reject(insertError);
                     }
-                    resolve({ existing: false, deviceId: insertResults.insertId });
+                    console.log(`Inserted device: ${insertResults.insertId} (hive: ${hiveId}, type: ${typeId})`);
+                    return resolve({ existing: false, deviceId: insertResults.insertId });
                 });
             }
         });
     });
 };
+
+const deleteDevice = (connection, deviceId) => {
+    return new Promise((resolve, reject) => {
+        const query = 'DELETE FROM devices WHERE id = ?';
+        connection.query(query, [deviceId], (error, results) => {
+            if (error) {
+                console.error('Error deleting device:', error);
+                return reject(error);
+            }
+
+            if(results.affectedRows === 0) {
+                console.log(`Device not found: ${deviceId}`);
+                return resolve({ deleted: false, deviceId: deviceId });
+            }
+            console.log(`Deleted device: ${deviceId}`);
+            return resolve({ deleted: true, deviceId: deviceId });
+        });
+    });
+};
+
 
 /**
  * 각 device의 IP 주소를 업데이트하는 함수
@@ -397,7 +458,7 @@ const updateDeviceIP = async (connection, data, ip) => {
                         console.error(`Error updating IP for device ${deviceId}:`, error);
                         return reject(error);
                     }
-                    resolve(results);
+                    return resolve(results);
                 });
             });
         }
@@ -409,16 +470,26 @@ const updateDeviceIP = async (connection, data, ip) => {
 
 module.exports = {
     createDbConnection,
-    getAreasAndHives,
-    getDevicesByHiveId,
-    getInOutDataByDeviceAndTimeRange,
-    getSensorDataByDeviceAndTimeRange,
-    getCameraDataByDeviceAndTimeRange,
-    insertInOutData,
-    insertSensorData,
-    insertCameraData,
     checkDevice,
     updateDeviceIP,
+
+    // =====
+    getAreasAndHives,
+    // =====
+    getHivesByAreaId,
     addHive,
-    addDevice
+    deleteHive,
+    // =====
+    getDevicesByHiveId,
+    addDevice,
+    deleteDevice,
+    // =====
+    insertInOutData,
+    getInOutDataByDeviceAndTimeRange,
+    // =====
+    insertSensorData,
+    getSensorDataByDeviceAndTimeRange,
+    // =====
+    insertCameraData,
+    getCameraDataByDeviceAndTimeRange
 };
