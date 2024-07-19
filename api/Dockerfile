@@ -13,6 +13,9 @@ RUN npm install
 # Copy the rest of the application files
 COPY . .
 
+# Give execute permission to wait-for-it.sh
+RUN chmod +x wait-for-it.sh
+
 # Expose the port the app runs on
 EXPOSE 80
 
