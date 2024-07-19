@@ -6,21 +6,31 @@
     <title>honey bee main</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <link rel="stylesheet" href="/honeybee/css/styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.0/nouislider.min.css" />
+    <script src="/honeybee/chart.js/chart.min.js"></script>
+    <script src="/honeybee/chartjs-adapter-date-fns/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="/honeybee/scripts/chartjs-plugin-crosshair.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.0/nouislider.min.js"></script>
 </head>
 <body>
     <header>
         <h1 class="nanum-gothic-bold">Smart Hive State Viewer</h1>
     </header>
     <div class="container">
-        <div class="left">
-            <div class="map-container">
-                <div id="map" style="width: 100%; height: 100%; background-color: #ccc;"></div>
+
+
+        <div class="dropdown-placeholder-container">
+            <div class="dropdown-container">
+                <div class="map-container">
+                    <div id="map" style="width: 100%; height: 100%; background-color: #ccc;"></div>
+                </div>
             </div>
-            <div class="search-container">
+            <div class="placeholder">
+                <!-- 벌통 이름 및 설명 등 또한 벌통 상태(범위 내 최신값, 날짜 및 시간과 함께) 표시할 곳 -->
+                <!-- dropdown이 지도에 가려져서 일단 여기로 뺌 -->
                 <div class="dropdown">
-                    <button id="areaButton" class="btn-14 nanum-gothic-bold" onclick="toggleDropdown('areaDropdown')" style="width: 100%; padding: 0.5rem; margin-top: 0.5rem;">지역 선택</button>
+                    <button id="areaButton" class="btn-14 nanum-gothic-bold" onclick="toggleDropdown('areaDropdown')"
+                    style="width: 100%; padding: 0.5rem; margin-top: 0.5rem;">지역 선택</button>
                     <div id="areaDropdown" class="dropdown-content">
                         <button onclick="updateDropdownForHives('incheon')">인천대학교 온실</button>
                         <button onclick="updateDropdownForHives('andong')">안동대학교 양봉사</button>
@@ -28,18 +38,60 @@
                 </div>
             </div>
         </div>
-        <div class="right">
+
+        <div class="time-selector">
+            <button onclick="setPreset('day')">1일</button>
+            <button onclick="setPreset('week')">1주</button>
+            <button onclick="setPreset('month')">1달</button>
+            시작: <input type="datetime-local" id="startDate">
+            종료: <input type="datetime-local" id="endDate">
+            <button onclick="updateUrlWithCustomPeriod()">조회</button>
+        </div>
+        
+        <div class="chart-grid">
             <div class="chart-block">
-                <canvas id="hive_io" style="width: 100%; height: 400px;"></canvas>
-                <canvas id="hive_th" style="width: 100%; height: 400px;"></canvas>
-                <canvas id="hive_co2" style="width: 100%; height: 400px;"></canvas>
-                <canvas id="hive_weigh" style="width: 100%; height: 400px;"></canvas>
+                <div class="slider-container">
+                    <label for="y-axis-range-io">Y</label>
+                    <div id="y-axis-range-io"></div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="hive_io"></canvas>
+                </div>
+            </div>
+            <div class="chart-block">
+                <div class="slider-container">
+                    <label for="y-axis-range-th">Y</label>
+                    <div id="y-axis-range-th"></div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="hive_th"></canvas>
+                </div>
+            </div>
+            <div class="chart-block">
+                <div class="slider-container">
+                    <label for="y-axis-range-co2">Y</label>
+                    <div id="y-axis-range-co2"></div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="hive_co2"></canvas>
+                </div>
+            </div>
+            <div class="chart-block">
+                <div class="slider-container">
+                    <label for="y-axis-range-weigh">Y</label>
+                    <div id="y-axis-range-weigh"></div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="hive_weigh"></canvas>
+                </div>
             </div>
         </div>
     </div>
     <footer>
-        <p>&copy; <span class="nanum-gothic-regular">Wireless Communication LAB, Dept of Embedded System Engineering, Incheon National University</span></p>
+        <p>&copy; <span class="nanum-gothic-regular">Wireless Communication LAB, Dept of Embedded System Engineering,
+                Incheon National University</span></p>
     </footer>
+    <script src="/honeybee/scripts/timeSelector.js"></script>
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
         // Initialize the map with dragging disabled
@@ -56,21 +108,21 @@
         
         // Add OpenStreetMap tiles
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
-    
+
         // Example marker (you can update coordinates as needed)
         L.marker([37.5665, 126.9780]).addTo(map)
-          .bindPopup('Seoul')
-          .openPopup();
-    
+            .bindPopup('Seoul')
+            .openPopup();
+
         // Dropdown toggle function
         function toggleDropdown(dropdownId) {
             document.getElementById(dropdownId).classList.toggle("show");
         }
-    
+
         // Close the dropdown if the user clicks outside of it
-        window.onclick = function(event) {
+        window.onclick = function (event) {
             if (!event.target.matches('#areaButton')) {
                 var dropdowns = document.getElementsByClassName("dropdown-content");
                 for (var i = 0; i < dropdowns.length; i++) {
@@ -81,9 +133,10 @@
                 }
             }
         }
-    
+
     </script>
     <script src="/honeybee/scripts/scripts.js"></script>
     <script src="/honeybee/scripts/charts.js"></script>
 </body>
+
 </html>

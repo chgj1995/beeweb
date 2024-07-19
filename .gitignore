@@ -15,6 +15,9 @@ lerna-debug.log*
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 # Runtime data
+package-lock.json
+
+# Runtime data
 pids
 *.pid
 *.seed
@@ -142,3 +145,7 @@ dist
 .svelte-kit
 
 # End of https://www.toptal.com/developers/gitignore/api/node
+
+
+# db backup foloder
+db/backup/data

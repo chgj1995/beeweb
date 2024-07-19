@@ -13,9 +13,8 @@ RUN npm install
 # Copy the rest of the application files
 COPY . .
 
-# Copy wait-for-it.sh script
-COPY ../wait-for-it.sh ./wait-for-it.sh
-RUN chmod +x ./wait-for-it.sh
+# Give execute permission to wait-for-it.sh
+RUN chmod +x wait-for-it.sh
 
 # Expose the port the app runs on
 EXPOSE 3000
