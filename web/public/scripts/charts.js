@@ -245,16 +245,16 @@ async function fetchAndRenderCharts(urlParams) {
     }
   }
 
-  const maxInOut = Math.max(...inoutData.map(data => Math.max(data.in_field, data.out_field)));
-  const maxTemp = Math.max(...sensorData.map(data => data.temp));
-  const maxHumi = Math.max(...sensorData.map(data => data.humi));
-  const maxCo2 = Math.max(...sensorData.map(data => data.co2));
-  const maxWeigh = Math.max(...sensorData.map(data => data.weigh));
+  const maxInout = inoutData.length > 0 ? Math.max(...inoutData.map(data => Math.max(data.in_field, data.out_field))) : 0;
+  const maxTemp = sensorData.length > 0 ? Math.max(...sensorData.map(data => data.temp)) : 0;
+  const maxHumi = sensorData.length > 0 ? Math.max(...sensorData.map(data => data.humi)) : 0;
+  const maxCo2 = sensorData.length > 0 ? Math.max(...sensorData.map(data => data.co2)) : 0;
+  const maxWeigh = sensorData.length > 0 ? Math.max(...sensorData.map(data => data.weigh)) : 0;
 
-  yMaxIo = maxInOut + (maxInOut * 0.1);
-  yMaxTh = Math.max(maxTemp, maxHumi) + (Math.max(maxTemp, maxHumi) * 0.1);
-  yMaxCo2 = maxCo2 + (maxCo2 * 0.1);
-  yMaxWeigh = maxWeigh + (maxWeigh * 0.1);
+  let yMaxIo = maxInout + (maxInout * 0.1);
+  let yMaxTh = Math.max(maxTemp, maxHumi) + (Math.max(maxTemp, maxHumi) * 0.1);
+  let yMaxCo2 = maxCo2 + (maxCo2 * 0.1);
+  let yMaxWeigh = maxWeigh + (maxWeigh * 0.1);
 
   createInOutChart(document.getElementById('hive_io').getContext('2d'), inoutData.map(data => new Date(data.time)), inoutData.map(data => data.in_field), inoutData.map(data => data.out_field), sTimeDate, eTimeDate, yMinIo, yMaxIo);
   createTempHumiChart(document.getElementById('hive_th').getContext('2d'), sensorData.map(data => new Date(data.time)), sensorData.map(data => data.temp), sensorData.map(data => data.humi), sTimeDate, eTimeDate, yMinTh, yMaxTh);
