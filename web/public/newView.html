@@ -18,7 +18,7 @@
             position: relative;
         }
 
-        .checklist {
+        .chart-device-checklist {
             display: none;
             position: absolute;
             background: #fff;
@@ -34,8 +34,66 @@
             position: relative;
         }
     </style>
+
+<style>
+    .area-selector, .hive-selector {
+        border: 1px solid #ccc;
+        margin-bottom: 10px;
+    }
+
+    .area-selector {
+        margin-left: 0;
+    }
+
+    .hive-selector {
+        margin-left: 20px;
+    }
+
+    .area-header, .hive-header {
+        display: flex;
+        align-items: center;
+        position: relative;
+        padding: 10px;
+        background: #f9f9f9;
+        border-bottom: 1px solid #ccc;
+    }
+
+    .area-body, .hive-body {
+        padding: 10px;
+    }
+
+    .area-header button, .hive-header button {
+        margin-right: 10px;
+    }
+
+    .checklist {
+        display: flex;
+        flex-wrap: wrap;
+        margin-top: 10px;
+    }
+
+    .checklist .device {
+        margin-right: 20px;
+    }
+</style>
 </head>
 <body>
+    <!-- device-selector -->
+    <div id="deviceContainer"></div>
+    <script src="./scripts/deviceSelector.js"></script>
+
+    <!-- time-selector -->
+    <div class="time-selector">
+        <button onclick="setPreset('day')">1일</button>
+        <button onclick="setPreset('week')">1주</button>
+        <button onclick="setPreset('month')">1달</button>
+        시작: <input type="datetime-local" id="startDate">
+        종료: <input type="datetime-local" id="endDate">
+        <button onclick="updateUrlWithCustomPeriod()">조회</button>
+    </div>
+    <script src="./scripts/timeSelector.js"></script>
+
+    <!-- chart-view -->
     <div class="container">
         <button onclick="addChartBlock()">[+]</button>
         <div class="chart-grid"></div>

@@ -24,13 +24,13 @@ function addChartBlock(selectedOptions = []) {
     chartBlock.innerHTML = `
                 <div class="chart-header">
                     <div>
-                        <button class="toggle-button" onclick="toggleChecklist(this)">►</button>
+                        <button class="toggle-button" onclick="toggleChartDeviceChecklist(this)">►</button>
                         <span class="chart-title">New Chart</span>
                     </div>
                     <div>
                         <button class="delete-button" onclick="deleteChartBlock(this)">[-]</button>
                     </div>
-                    <div class="checklist">
+                    <div class="chart-device-checklist">
                         ${checklistHTML}
                     </div>
                 </div>
@@ -61,8 +61,8 @@ function deleteChartBlock(button) {
 // ================== 차트 아이템 관리 ==================
 
 // 체크리스트 토글 함수
-function toggleChecklist(button) {
-    const checklist = button.closest('.chart-header').querySelector('.checklist');
+function toggleChartDeviceChecklist(button) {
+    const checklist = button.closest('.chart-header').querySelector('.chart-device-checklist');
     if (checklist) {
         if (checklist.style.display === 'none' || checklist.style.display === '') {
             checklist.style.display = 'block';
@@ -76,7 +76,7 @@ function toggleChecklist(button) {
 
 // 체크리스트 상태에 따라 체크리스트 업데이트하는 함수
 function updateChecklist(chartBlock, selectedType) {
-    const checklist = chartBlock.querySelector('.checklist');
+    const checklist = chartBlock.querySelector('.chart-device-checklist');
     const selectedIds = Array.from(checklist.querySelectorAll('input:checked')).map(cb => cb.id);
 
     const checklistHTML = datas
@@ -95,8 +95,8 @@ function updateChart(checkbox) {
     const canvas = chartBlock.querySelector('canvas');
     const ctx = canvas.getContext('2d');
 
-    const selectedOptions = Array.from(chartBlock.querySelectorAll('.checklist input:checked')).map(cb => cb.id);
-    const selectedTypes = Array.from(chartBlock.querySelectorAll('.checklist input:checked')).map(cb => datas.find(data => data.device.id == cb.id).device.type);
+    const selectedOptions = Array.from(chartBlock.querySelectorAll('.chart-device-checklist input:checked')).map(cb => cb.id);
+    const selectedTypes = Array.from(chartBlock.querySelectorAll('.chart-device-checklist input:checked')).map(cb => datas.find(data => data.device.id == cb.id).device.type);
 
     // 선택된 아이템이 있을 경우, 해당 유형만 체크리스트에 표시
     if (selectedTypes.length > 0) {
@@ -124,7 +124,7 @@ function updateURLParams() {
     const params = [];
 
     chartBlocks.forEach((block, index) => {
-        const selectedOptions = Array.from(block.querySelectorAll('.checklist input:checked')).map(cb => cb.id);
+        const selectedOptions = Array.from(block.querySelectorAll('.chart-device-checklist input:checked')).map(cb => cb.id);
         if (selectedOptions.length > 0) {
             params.push(`chart${index + 1}=${selectedOptions.join(',')}`);
         }
@@ -153,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchAndRenderCharts(window.location.search);
 
     // 차트 블록에 이벤트 리스너 추가
-    document.querySelectorAll('.checklist input').forEach(checkbox => {
+    document.querySelectorAll('.chart-device-checklist input').forEach(checkbox => {
         checkbox.addEventListener('change', () => updateChart(checkbox));
     });
 });
