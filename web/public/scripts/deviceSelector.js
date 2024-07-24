@@ -1,55 +1,52 @@
 let deviceList = [];
 
-document.addEventListener('DOMContentLoaded', () => {
-    const deviceContainer = document.getElementById('deviceContainer');
-    const areas = getAreaHives();
+async function fetchAreaHiveData() {
+    try {
+        const response = await fetch('/honeybee/api/areahive');
+        let data = await response.json();
 
-    areas.forEach(area => {
-        const areaElement = createAreaElement(area);
-        deviceContainer.appendChild(areaElement);
-    });
+        // 하이브 이름을 기준으로 정렬하고, 하이브가 없는 지역 제거
+        data = data
+            .filter(area => area.hives.length > 0) // 하이브가 있는 지역만 남김
+            .map(area => {
+                area.hives.sort((a, b) => {
+                    const aNumber = parseInt(a.name.replace('Hive ', ''));
+                    const bNumber = parseInt(b.name.replace('Hive ', ''));
+                    return aNumber - bNumber;
+                });
+                return area;
+            });
 
-    document.addEventListener('deviceListUpdated', (event) => {
-        console.log('Device List Updated:', event.detail);
-    });
-});
-
-function getAreaHives() {
-    return [
-        {
-            "id": 1,
-            "name": "인천대",
-            "hives": [
-                { "id": 1, "name": "Hive 1" },
-                { "id": 2, "name": "Hive 2" }
-            ]
-        },
-        {
-            "id": 2,
-            "name": "안동대",
-            "hives": [
-                { "id": 3, "name": "Hive 3" }
-            ]
-        }
-    ];
+        return data;
+    } catch (error) {
+        console.error('Error fetching area and hive data:', error);
+    }
 }
 
-function getDevices(hiveId) {
-    const devices = {
-        1: [
-            { name: 'device1', id: 'd1' },
-            { name: 'device2', id: 'd2' }
-        ],
-        2: [
-            { name: 'device3', id: 'd3' }
-        ],
-        3: [
-            { name: 'device4', id: 'd4' },
-            { name: 'device5', id: 'd5' }
-        ]
-    };
-    return devices[hiveId] || [];
-}
+async function fetchDevicesByHive(hiveId) {
+    const url = `/honeybee/api/device?hiveId=${hiveId}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    console.log(`Devices received for hive ${hiveId}:`, data);
+    return data;
+  }
+
+// function getDevices(hiveId) {
+//     const devices = {
+//         1: [
+//             { name: 'device1', id: 'd1' },
+//             { name: 'device2', id: 'd2' }
+//         ],
+//         2: [
+//             { name: 'device3', id: 'd3' }
+//         ],
+//         3: [
+//             { name: 'device4', id: 'd4' },
+//             { name: 'device5', id: 'd5' }
+//         ]
+//     };
+//     return devices[hiveId] || [];
+// }
 
 function createAreaElement(area) {
     const areaDiv = document.createElement('div');
@@ -60,7 +57,9 @@ function createAreaElement(area) {
 
     const toggleButton = document.createElement('button');
     toggleButton.textContent = '►';
-    toggleButton.onclick = () => toggleElement(toggleButton, areaBody);
+    toggleButton.onclick = async () => {
+        await toggleElement(toggleButton, areaBody);
+    };
 
     const title = document.createElement('span');
     title.textContent = area.name;
@@ -91,8 +90,9 @@ function createHiveElement(hive) {
 
     const toggleButton = document.createElement('button');
     toggleButton.textContent = '►';
-    toggleButton.onclick = () => toggleElement(toggleButton, hiveBody);
-
+    toggleButton.onclick = async () => {
+        await toggleElement(toggleButton, hiveBody);
+    };
     const title = document.createElement('span');
     title.textContent = hive.name;
 
@@ -110,14 +110,15 @@ function createHiveElement(hive) {
     return hiveDiv;
 }
 
-function toggleElement(button, element) {
+async function toggleElement(button, element) {
     if (element.style.display === 'none' || element.style.display === '') {
         element.style.display = 'block';
         button.textContent = '▼';
         if (element.className === 'hive-body' && element.children.length === 0) {
-            const devices = getDevices(element.dataset.hiveId);
+            const devices = await fetchDevicesByHive(element.dataset.hiveId);
+            console.log('Devices:', devices);
             const checklist = document.createElement('div');
-            checklist.className = 'checklist';
+            checklist.className = 'device-checklist';
             devices.forEach(device => {
                 const deviceDiv = createCheckboxElement(device.name, device.id);
                 checklist.appendChild(deviceDiv);
@@ -158,3 +159,19 @@ function createCheckboxElement(name, id) {
     div.appendChild(label);
     return div;
 }
+
+document.addEventListener('DOMContentLoaded', async () => {
+    const deviceContainer = document.getElementById('deviceContainer');
+    const areaHives = await fetchAreaHiveData();
+    
+    console.log('Area Hives:', areaHives);
+
+    areaHives.forEach(area => {
+        const areaElement = createAreaElement(area);
+        deviceContainer.appendChild(areaElement);
+    });
+
+    document.addEventListener('deviceListUpdated', (event) => {
+        console.log('Device List Updated:', event.detail);
+    });
+});

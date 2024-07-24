@@ -75,34 +75,6 @@ const getAreasAndHives = (connection) => {
 // =============================
 // DEVICES
 // =============================
-// Devices를 조회하는 함수
-const getDevicesByHiveId = (connection, hiveId) => {
-    return new Promise((resolve, reject) => {
-        const query = 'SELECT id, type_id FROM devices WHERE hive_id = ?';
-        connection.query(query, [hiveId], (error, results) => {
-            if (error) {
-                console.error('Error fetching devices:', error);
-                return reject(error);
-            }
-            console.log(`Fetched ${results.length} devices for hive ${hiveId}`);
-            return resolve(results.map(device => ({ id: device.id, type: device.type_id })));
-        });
-    });
-};
-
-const checkDevice = (connection, id, type) => {
-    return new Promise((resolve, reject) => {
-        const query = 'SELECT id FROM devices WHERE id = ? AND type_id = ?';
-        connection.query(query, [id, type], (error, results) => {
-            if (error) {
-                console.error('Error checking device:', error);
-                return reject(error);
-            }
-            console.log(`Checked device: ${id} (type: ${type})`);
-            return resolve(results);
-        });
-    });
-};
 
 
 // =============================
@@ -383,34 +355,59 @@ const deleteHive = (connection, hiveId) => {
 // =============================
 // DEVICE
 // =============================
-/**
- * @typedef {Object} UploadData
- * @property {number} id - 장치의 Id를 나타냅니다.
- * @property ... - 다른 필드들은 각 장치 타입에 따라 다릅니다.
- */
 
-const addDevice = (connection, hiveId, typeId) => {
+// Devices를 조회하는 함수
+const getDevicesByHiveId = (connection, hiveId) => {
+    return new Promise((resolve, reject) => {
+        const query = 'SELECT id, name, type_id FROM devices WHERE hive_id = ?';
+        connection.query(query, [hiveId], (error, results) => {
+            if (error) {
+                console.error('Error fetching devices:', error);
+                return reject(error);
+            }
+            console.log(`Fetched ${results.length} devices for hive ${hiveId}`);
+            return resolve(results.map(device => ({ id: device.id, name:device.name, type: device.type_id })));
+        });
+    });
+};
+
+// 해당 type의 장치 id가 있는지 확인
+const checkDevice = (connection, id, type) => {
+    return new Promise((resolve, reject) => {
+        const query = 'SELECT id FROM devices WHERE id = ? AND type_id = ?';
+        connection.query(query, [id, type], (error, results) => {
+            if (error) {
+                console.error('Error checking device:', error);
+                return reject(error);
+            }
+            console.log(`Checked device: ${id} (type: ${type})`);
+            return resolve(results);
+        });
+    });
+};
+
+const addDevice = (connection, name, hiveId, typeId) => {
     return new Promise((resolve, reject) => {
         // 먼저 중복 체크
-        const checkQuery = 'SELECT id FROM devices WHERE hive_id = ? AND type_id = ?';
-        connection.query(checkQuery, [hiveId, typeId], (checkError, checkResults) => {
+        const checkQuery = 'SELECT id FROM devices WHERE name = ? AND hive_id = ? AND type_id = ?';
+        connection.query(checkQuery, [name, hiveId, typeId], (checkError, checkResults) => {
             if (checkError) {
                 console.error('Error checking device:', checkError);
                 return reject(checkError);
             }
             if (checkResults.length > 0) {
                 // 이미 존재하는 경우
-                console.log(`Device already exists: ${checkResults[0].id} (hive: ${hiveId}, type: ${typeId})`);
+                console.log(`Device already exists: ${checkResults[0].id} (name: ${name}, hive: ${hiveId}, type: ${typeId})`);
                 return resolve({ existing: true, deviceId: checkResults[0].id });
             } else {
                 // 존재하지 않으면 새로 삽입
-                const insertQuery = 'INSERT INTO devices (hive_id, type_id) VALUES (?, ?)';
-                connection.query(insertQuery, [hiveId, typeId], (insertError, insertResults) => {
+                const insertQuery = 'INSERT INTO devices (name, hive_id, type_id) VALUES (?, ?, ?)';
+                connection.query(insertQuery, [name, hiveId, typeId], (insertError, insertResults) => {
                     if (insertError) {
                         console.error('Error adding device:', insertError);
                         return reject(insertError);
                     }
-                    console.log(`Inserted device: ${insertResults.insertId} (hive: ${hiveId}, type: ${typeId})`);
+                    console.log(`Inserted device: ${insertResults.insertId} (name: ${name}, hive: ${hiveId}, type: ${typeId})`);
                     return resolve({ existing: false, deviceId: insertResults.insertId });
                 });
             }

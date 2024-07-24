@@ -58,7 +58,9 @@ CREATE TABLE IF NOT EXISTS devices (
     id INT AUTO_INCREMENT PRIMARY KEY,
     hive_id INT NOT NULL,
     type_id INT NOT NULL,
-    modem_ip VARCHAR(255)
+    modem_ip VARCHAR(255),
+    name VARCHAR(255),
+    UNIQUE KEY unique_device (hive_id, type_id, name)
 );
 
 -- DEVICE_TYPES 테이블 생성 및 초기 데이터 삽입

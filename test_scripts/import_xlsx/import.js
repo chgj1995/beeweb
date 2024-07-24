@@ -16,7 +16,7 @@ const registerHiveAndDevice = async (areaId, hiveId) => {
     const hiveDbId = responseHive.data.hiveId;
 
     // Register Device
-    const responseDevice = await axios.post(`${API_URL}/api/device`, { hiveId: hiveDbId, typeId: 2 }, {
+    const responseDevice = await axios.post(`${API_URL}/api/device`, { name:`BeeOnFarm`, hiveId: hiveDbId, typeId: 2 }, {
       validateStatus: function (status) {
         return status === 201 || status === 409; // Resolve only if the status code is 201 or 409
       }

@@ -66,13 +66,13 @@
         margin-right: 10px;
     }
 
-    .checklist {
+    .device-checklist {
         display: flex;
         flex-wrap: wrap;
         margin-top: 10px;
     }
 
-    .checklist .device {
+    .device-checklist .device {
         margin-right: 20px;
     }
 </style>
@@ -80,7 +80,7 @@
 <body>
     <!-- device-selector -->
     <div id="deviceContainer"></div>
-    <script src="./scripts/deviceSelector.js"></script>
+    <script src="/honeybee/scripts/deviceSelector.js"></script>
 
     <!-- time-selector -->
     <div class="time-selector">
@@ -91,14 +91,14 @@
         종료: <input type="datetime-local" id="endDate">
         <button onclick="updateUrlWithCustomPeriod()">조회</button>
     </div>
-    <script src="./scripts/timeSelector.js"></script>
+    <script src="/honeybee/scripts/timeSelector.js"></script>
 
     <!-- chart-view -->
     <div class="container">
         <button onclick="addChartBlock()">[+]</button>
         <div class="chart-grid"></div>
     </div>
-    <script src="./scripts/dynamicChart.js"></script>
+    <script src="/honeybee/scripts/dynamicChart.js"></script>
     
     </script>
 </body>

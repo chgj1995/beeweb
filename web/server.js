@@ -21,6 +21,10 @@ app.use('/honeybee/chartjs-adapter-date-fns', express.static(path.join(__dirname
 // Create a router for /honeybee
 const honeybeeRouter = express.Router();
 
+honeybeeRouter.get('/newView', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'newView.html'));
+});
+
 // Route to serve the HTML view with query parameters
 honeybeeRouter.get('/view', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'view.html'));

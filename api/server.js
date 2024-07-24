@@ -316,14 +316,14 @@ app.get('/api/device', async (req, res) => {
 });
 
 app.post('/api/device', async (req, res) => {
-  const { hiveId, typeId } = req.body;
+  const { name, hiveId, typeId } = req.body;
 
-  if (!hiveId || !typeId) {
+  if (!name || !hiveId || !typeId) {
     return res.status(400).send('Bad Request: Missing required fields');
   }
 
   try {
-    const result = await database.addDevice(dbConnection, hiveId, typeId);
+    const result = await database.addDevice(dbConnection, name, hiveId, typeId);
     if(result.existing) {
       return res.status(409).json({message: 'Device already exists', deviceId: result.deviceId});
     } else {
