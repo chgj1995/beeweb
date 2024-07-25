@@ -300,17 +300,22 @@ app.delete('/api/hive', async (req, res) => {
 // DEVICE
 // =============================
 app.get('/api/device', async (req, res) => {
-  const { hiveId } = req.query;
+  const { hiveId, deviceId } = req.query;
 
-  if (!hiveId) {
-    return res.status(400).send('Bad Request: Missing hiveId');
+  if (!hiveId && !deviceId) {
+    return res.status(400).send('Bad Request: Missing hiveId or deviceId');
   }
 
   try {
-    const devices = await database.getDevicesByHiveId(dbConnection, hiveId);
+    let devices;
+    if (deviceId) {
+      devices = await database.getDeviceByDeviceId(dbConnection, deviceId.split(','));
+    } else {
+      devices = await database.getDevicesByHiveId(dbConnection, hiveId);
+    }
     return res.status(200).json(devices);
   } catch (error) {
-    console.error('Error fetching devices:', error);
+    console.error('Error fetching device:', error);
     return res.status(500).send('Internal Server Error');
   }
 });

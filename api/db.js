@@ -200,6 +200,8 @@ const getSensorDataByDeviceAndTimeRange = (connection, deviceId, sTime, eTime) =
         WHERE device_id = ? AND time BETWEEN ? AND ?
         ORDER BY time DESC
       `;
+        console.log(`deviceId: ${deviceId}, sTime: ${sTime}, eTime: ${eTime}`);
+        console.log('query:', query);
         connection.query(query, [deviceId, sTime, eTime], (error, results) => {
             if (error) {
                 console.error('Error fetching sensor_data:', error);
@@ -356,7 +358,7 @@ const deleteHive = (connection, hiveId) => {
 // DEVICE
 // =============================
 
-// Devices를 조회하는 함수
+// Device 목록을 조회하는 함수
 const getDevicesByHiveId = (connection, hiveId) => {
     return new Promise((resolve, reject) => {
         const query = 'SELECT id, name, type_id FROM devices WHERE hive_id = ?';
@@ -366,10 +368,33 @@ const getDevicesByHiveId = (connection, hiveId) => {
                 return reject(error);
             }
             console.log(`Fetched ${results.length} devices for hive ${hiveId}`);
-            return resolve(results.map(device => ({ id: device.id, name:device.name, type: device.type_id })));
+            return resolve(results);
         });
     });
 };
+
+const getDeviceByDeviceId = (connection, deviceIds) => {
+    return new Promise((resolve, reject) => {
+
+        // deviceIds가 배열이 아닌 경우 배열로 변환
+        if (!Array.isArray(deviceIds)) {
+            deviceIds = [deviceIds];
+        }
+
+        // 쿼리 문자열과 파라미터 배열 생성
+        const query = `SELECT id, name, hive_id, type_id FROM devices WHERE id IN (${deviceIds.map(() => '?').join(',')})`;
+        const params = deviceIds;
+        connection.query(query, params, (error, results) => {
+            if (error) {
+                console.error('Error fetching devices:', error);
+                return reject(error);
+            }
+            console.log(`Fetched ${results.length} devices for device ${deviceIds}`);
+            return resolve(results);
+        });
+    });
+};
+
 
 // 해당 type의 장치 id가 있는지 확인
 const checkDevice = (connection, id, type) => {
@@ -478,6 +503,7 @@ module.exports = {
     deleteHive,
     // =====
     getDevicesByHiveId,
+    getDeviceByDeviceId,
     addDevice,
     deleteDevice,
     // =====

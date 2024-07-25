@@ -49,7 +49,8 @@
         margin-left: 20px;
     }
 
-    .area-header, .hive-header {
+    .area-selector .header,
+    .hive-selector .header {
         display: flex;
         align-items: center;
         position: relative;
@@ -58,29 +59,31 @@
         border-bottom: 1px solid #ccc;
     }
 
-    .area-body, .hive-body {
+    .area-selector .body,
+    .hive-selector .body {
         padding: 10px;
     }
 
-    .area-header button, .hive-header button {
+    .area-selector .header button,
+    .hive-selector .header button {
         margin-right: 10px;
     }
 
-    .device-checklist {
+    .selector-device-checklist {
         display: flex;
         flex-wrap: wrap;
         margin-top: 10px;
     }
 
-    .device-checklist .device {
+    .selector-device-checklist .device {
         margin-right: 20px;
     }
+
 </style>
 </head>
 <body>
     <!-- device-selector -->
-    <div id="deviceContainer"></div>
-    <script src="/honeybee/scripts/deviceSelector.js"></script>
+    <div id="device-selector"></div>
 
     <!-- time-selector -->
     <div class="time-selector">
@@ -89,17 +92,20 @@
         <button onclick="setPreset('month')">1달</button>
         시작: <input type="datetime-local" id="startDate">
         종료: <input type="datetime-local" id="endDate">
-        <button onclick="updateUrlWithCustomPeriod()">조회</button>
+        <button onclick="searchWithTimePeriod()">조회</button>
     </div>
-    <script src="/honeybee/scripts/timeSelector.js"></script>
+    
 
     <!-- chart-view -->
     <div class="container">
         <button onclick="addChartBlock()">[+]</button>
         <div class="chart-grid"></div>
     </div>
-    <script src="/honeybee/scripts/dynamicChart.js"></script>
     
-    </script>
+    <!-- 순서 중요[배치(동작)의 역순] Chart -> Fetcher -> Time -> Device -->
+    <script src="/honeybee/scripts/dynamicChart.js"></script>
+    <script src="/honeybee/scripts/dataFetcher.js"></script>
+    <script src="/honeybee/scripts/timeSelector.js"></script>
+    <script src="/honeybee/scripts/deviceSelector.js"></script>
 </body>
 </html>

@@ -1,18 +1,4 @@
-document.addEventListener("DOMContentLoaded", function() {
-    // 페이지 로드 시 URL에서 시간 가져와 업데이트
-    const urlParams = new URLSearchParams(window.location.search);
-    const sTime = urlParams.get('sTime');
-    const eTime = urlParams.get('eTime');
-    
-    if (sTime) {
-      document.getElementById('startDate').value = convertToLocalDateTime(new Date(sTime));
-    }
-    if (eTime) {
-      document.getElementById('endDate').value = convertToLocalDateTime(new Date(eTime));
-    }
-});
-
-function updateUrlWithCustomPeriod() {
+function searchWithTimePeriod() {
     const startDate = document.getElementById('startDate').value;
     const endDate = document.getElementById('endDate').value;
     
@@ -20,8 +6,11 @@ function updateUrlWithCustomPeriod() {
         const newUrl = new URL(window.location);
         newUrl.searchParams.set('sTime', new Date(startDate).toISOString().split('.')[0] + 'Z');
         newUrl.searchParams.set('eTime', new Date(endDate).toISOString().split('.')[0] + 'Z');
-        window.location.href = newUrl.toString(); // 페이지를 새로고침
+        window.history.replaceState(null, '', newUrl.toString()); // URL 업데이트
     }
+
+    const updateEvent = new CustomEvent('timeRangeUpdated', { detail: { sTime: startDate, eTime: endDate } });
+    document.dispatchEvent(updateEvent);
 }
 
 function setPreset(period) {
@@ -43,11 +32,11 @@ function setPreset(period) {
     document.getElementById('startDate').value = convertToLocalDateTime(startDate);
     document.getElementById('endDate').value = convertToLocalDateTime(endDate);
   
-    // URL 업데이트 및 페이지 새로고침
+    // URL 업데이트
     const newUrl = new URL(window.location);
     newUrl.searchParams.set('sTime', startDate.toISOString().split('.')[0] + 'Z');
     newUrl.searchParams.set('eTime', endDate.toISOString().split('.')[0] + 'Z');
-    window.location.href = newUrl.toString(); // 페이지를 새로고침
+    window.history.replaceState(null, '', newUrl.toString()); // URL 업데이트
 }
 
 // Helper function to format date-time for input fields
@@ -56,3 +45,36 @@ function convertToLocalDateTime(date) {
     const localISOTime = new Date(date.getTime() - tzOffset).toISOString().slice(0, 16);
     return localISOTime;
 }
+
+document.addEventListener("DOMContentLoaded", function() {
+    // 페이지 로드 시 URL에서 시간 가져와 업데이트
+    const urlParams = new URLSearchParams(window.location.search);
+    let sTime = urlParams.get('sTime');
+    let eTime = urlParams.get('eTime');
+    
+    if (!sTime || !eTime) {
+        // sTime이나 eTime이 없으면 한달 전의 날짜와 현재 날짜로 기본 설정
+        const endDate = new Date();
+        const startDate = new Date(endDate);
+        startDate.setMonth(startDate.getMonth() - 1);
+        
+        sTime = startDate.toISOString().split('.')[0] + 'Z';
+        eTime = endDate.toISOString().split('.')[0] + 'Z';
+        
+        const newUrl = new URL(window.location);
+        newUrl.searchParams.set('sTime', sTime);
+        newUrl.searchParams.set('eTime', eTime);
+        window.history.replaceState(null, '', newUrl.toString()); // URL 업데이트
+    }
+    
+    if (sTime) {
+        document.getElementById('startDate').value = convertToLocalDateTime(new Date(sTime));
+    }
+    if (eTime) {
+        document.getElementById('endDate').value = convertToLocalDateTime(new Date(eTime));
+    }
+
+    const updateEvent = new CustomEvent('timeRangeUpdated', { detail: { sTime: sTime, eTime: eTime } });
+    document.dispatchEvent(updateEvent);
+});
+

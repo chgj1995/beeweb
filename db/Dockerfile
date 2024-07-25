@@ -14,7 +14,7 @@ COPY init.sql /docker-entrypoint-initdb.d/
 COPY custom-mariadb.cnf /etc/mysql/conf.d/
 
 # 추가: MySQL 클라이언트 도구 설치
-RUN apt-get update && apt-get install -y mysql-client
+RUN apt-get update && apt-get install -y mariadb-client
 
 # 기본 MariaDB 포트 노출
 EXPOSE 3306
