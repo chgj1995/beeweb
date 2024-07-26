@@ -20,27 +20,40 @@ async function fetchSensorData(deviceId, sTime, eTime) {
 
 async function fetchDataList() {
     fetcher_dataList = [];
-
+    let i = 0;
     for(const device of fetcher_deviceList) {
         let data;
-
-        // // fetchDataList에 deviceId가 없는 경우(데이터가 없는 경우)에만 데이터를 가져옴
-        // if(fetcher_dataList.find(d => d.device.id == device.id) != undefined) {
-        //     console.log('Data already fetched for device:', device);
-        //     continue;
-        // }
-
         if(device.type_id == 2) {
             data = await fetchSensorData(device.id, fetcher_tRange.sTime, fetcher_tRange.eTime);
-            console.log('fetched data', {device: device, data: data});
-            fetcher_dataList.push({device: device, data: data});
+
+            // map 함수를 이용하여 data를 각각 'Temp', 'Humi', 'CO2', 'Weight'로 파싱하고 각 값과 시간을 분리하여 배열에 추가
+            const tempData = data.map(d => ({id:d.id, value: d.temp, time: d.time}));
+            const humiData = data.map(d => ({id:d.id, value: d.humi, time: d.time}));
+            const co2Data = data.map(d => ({id:d.id, value: d.co2, time: d.time}));
+            const weightData = data.map(d => ({id:d.id, value: d.weight, time: d.time}));
+            
+            const tempDevice = {id: i++, type: 'Temp', hive_name: device.hive_name, name: device.name};
+            const humiDevice = {id: i++, type: 'Humi', hive_name: device.hive_name, name: device.name};
+            const co2Device = {id: i++, type: 'CO2', hive_name: device.hive_name, name: device.name};
+            const weightDevice = {id: i++, type: 'Weight', hive_name: device.hive_name, name: device.name};
+
+            fetcher_dataList.push({device: tempDevice, data: tempData});
+            fetcher_dataList.push({device: humiDevice, data: humiData});
+            fetcher_dataList.push({device: co2Device, data: co2Data});
+            fetcher_dataList.push({device: weightDevice, data: weightData});
         } else if(device.type_id == 3) {
             data = await fetchInOutData(device.id, fetcher_tRange.sTime, fetcher_tRange.eTime);
-            console.log('fetched data', {device: device, data: data});
-            fetcher_dataList.push({device: device, data: data});
+
+            const inData = data.map(d => ({id:d.id, value: d.in_field, time: d.time}));
+            const outData = data.map(d => ({id:d.id, value: d.out_field, time: d.time}));
+
+            const inDevice = {id: i++, type: 'In', hive_name: device.hive_name, name: device.name};
+            const outDevice = {id: i++, type: 'Out', hive_name: device.hive_name, name: device.name};
+
+            fetcher_dataList.push({device: inDevice, data: inData});
+            fetcher_dataList.push({device: outDevice, data: outData});
         }
     }
-    console.log('All data fetched:', fetcher_dataList);
 
     const updateEvent = new CustomEvent('dataUpdated', { detail: fetcher_dataList });
     document.dispatchEvent(updateEvent);
@@ -49,6 +62,7 @@ async function fetchDataList() {
 // ================== 장치 선택기의 이벤트 리스너 ==================
 document.addEventListener('deviceListUpdated', async (event) => {
     console.log('deviceListUpdated:', event.detail);
+
     fetcher_deviceList = event.detail;
     await fetchDataList();
 });
@@ -63,7 +77,7 @@ document.addEventListener('timeRangeUpdated', async (event) => {
     }
 });
 
-// ================== 차트에서 쓸 테스트용 이벤트 리스너 ==================
-document.addEventListener('dataUpdated', (event) => {
-    console.log('dataLoaded:', fetcher_dataList);
-});
+// // ================== 차트에서 쓸 테스트용 이벤트 리스너 ==================
+// document.addEventListener('dataUpdated', (event) => {
+//     console.log('dataLoaded:', fetcher_dataList);
+// });

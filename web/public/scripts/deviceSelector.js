@@ -1,5 +1,34 @@
-let selector_deviceList = [];
-let selector_areaHives = [];
+let selector_areaHiveDevices = [];
+
+
+function selector_addDevices(hiveId, devices) {
+
+    for(const area of selector_areaHiveDevices) {
+        if(!area.hives) { continue; }
+        for(const hive of area.hives) {
+            if(hive.id == hiveId) {
+                hive.devices = devices;
+                return;
+            }
+        }
+    }
+}
+
+function selector_checkDevice(deviceId, isChecked) {
+
+    for(const area of selector_areaHiveDevices) {
+        if(!area.hives) { continue; }
+        for(const hive of area.hives) {
+            if(!hive.devices) { continue; }
+            for(const device of hive.devices) {
+                if(device.id == deviceId) {
+                    device.isChecked = isChecked;
+                    return;
+                }
+            }
+        }
+    }
+}
 
 async function fetchAreaHiveData() {
     try {
@@ -112,6 +141,9 @@ async function toggleElement(button, element, isShow = false) {
             const hiveId = element.dataset.hiveId;
             const devices = await fetchDevicesByHive(hiveId);
             console.log('Devices:', devices);
+
+            selector_addDevices(hiveId, devices);
+
             const checklist = document.createElement('div');
             checklist.className = 'selector-device-checklist';
             devices.forEach(device => {
@@ -136,16 +168,13 @@ function createCheckboxElement(id, type_id, name) {
     checkbox.id = id;
     checkbox.onchange = (event) => {
         if (event.target.checked) {
-            selector_deviceList.push(id);
+            selector_checkDevice(id, true);
         } else {
-            const index = selector_deviceList.indexOf(id);
-            if (index > -1) {
-                selector_deviceList.splice(index, 1);
-            }
+            selector_checkDevice(id, false);
         }
         updateURLParamsForDevice();
-        const updateEvent = new CustomEvent('deviceListUpdated', { detail: selector_deviceList });
-        document.dispatchEvent(updateEvent);
+        
+        sendDeviceList();
     };
 
     const label = document.createElement('label');
@@ -157,7 +186,7 @@ function createCheckboxElement(id, type_id, name) {
     //     'INOUT': 3,
     //   };
     if(type_id == 2) {
-        label.textContent = `[TEMP&HUMI] ${name}`;
+        label.textContent = `[Env] ${name}`;
     } else if (type_id == 3) {
         label.textContent = `[I/O] ${name}`;
     } else {
@@ -202,48 +231,63 @@ async function fetchAndRenderDevice() {
     const urlDevices = urlSearchParams.get('deviceId');
     if (urlDevices) {
         const devices = await fetchDeviceByDeviceId(urlDevices);
+        for(const device of devices) {            
+            // hiveId를 가진 area를 찾음
+            const area = selector_areaHiveDevices.find(area => area.hives && area.hives.find(hive => hive.id == device.hive_id));
+            if(!area) { continue; }
 
-        for(const device of devices) {
-            const hiveId = device.hive_id;
-            // areaHives에서 hiveId를 가진 area를 찾음
-            const area = selector_areaHives.find(area => area.hives && area.hives.find(hive => hive.id == hiveId));
-            if(!area) { return; }
-            const areaId = area.id;
-
-            const areaElement = document.querySelector(`.area-selector[data-area-id='${areaId}']`);
-            if (!areaElement) { return; }
-
+            // AREA 토글 버튼을 찾음
+            const areaElement = document.querySelector(`.area-selector[data-area-id='${area.id}']`);
+            if (!areaElement) { continue; }
             const areaToggleButton = areaElement.querySelector('.body button');
-            if (!areaToggleButton) { return; }
+            if (!areaToggleButton) { continue; }
             await toggleElement(areaToggleButton, areaElement, true);
 
-            const hiveElement = areaElement.querySelector(`.hive-selector[data-hive-id='${hiveId}']`);
-            if (!hiveElement) { return; }
-
+            // HIVE 토글 버튼을 찾음
+            const hiveElement = areaElement.querySelector(`.hive-selector[data-hive-id='${device.hive_id}']`);
+            if (!hiveElement) { continue; }
             const hiveToggleButton = hiveElement.querySelector('.body button');
-            if (!hiveToggleButton) { return; }
+            if (!hiveToggleButton) { continue; }
             await toggleElement(hiveToggleButton, hiveElement, true);
 
+            // DEVICE 체크박스를 찾음
             const deviceCheckBox = hiveElement.querySelector(`.selector-device-checklist input[id='${device.id}']`);
-            if (!deviceCheckBox) { return; }
-
+            if (!deviceCheckBox) { continue; }
             deviceCheckBox.checked = true;
-            selector_deviceList.push(device);
-        };
-
-        const updateEvent = new CustomEvent('deviceListUpdated', { detail: selector_deviceList });
-        document.dispatchEvent(updateEvent);
+            selector_checkDevice(device.id, true);
+        }
+        sendDeviceList();
     }
 }
 
+// 이벤트 발생시키는 함수
+function sendDeviceList() {
+    let selected_deviceList = [];
+
+    for (const area of selector_areaHiveDevices) {
+        if(!area.hives) { continue; }
+        for (const hive of area.hives) {
+            if(!hive.devices) { continue; }
+            for (const device of hive.devices) {
+                if(device.isChecked) {
+                    // device에 hive_name 추가
+                    let deviceWitHiveInfo = {id: device.id, name: device.name, type_id: device.type_id, hive_id:hive.id, hive_name: hive.name};
+                    selected_deviceList.push(deviceWitHiveInfo);
+                }
+            }
+        }
+    }
+
+    const updateEvent = new CustomEvent('deviceListUpdated', { detail: selected_deviceList });
+    document.dispatchEvent(updateEvent);
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
     const deviceSelector = document.getElementById('device-selector');
-    selector_areaHives = await fetchAreaHiveData();
+    
+    selector_areaHiveDevices = await fetchAreaHiveData();
 
-    console.log('Area Hives:', selector_areaHives);
-
-    for(const area of selector_areaHives) {
+    for(const area of selector_areaHiveDevices) {
         const areaElement = createAreaElement(area);
         deviceSelector.appendChild(areaElement);
     }

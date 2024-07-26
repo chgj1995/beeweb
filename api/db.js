@@ -200,8 +200,8 @@ const getSensorDataByDeviceAndTimeRange = (connection, deviceId, sTime, eTime) =
         WHERE device_id = ? AND time BETWEEN ? AND ?
         ORDER BY time DESC
       `;
-        console.log(`deviceId: ${deviceId}, sTime: ${sTime}, eTime: ${eTime}`);
-        console.log('query:', query);
+        // console.log(`deviceId: ${deviceId}, sTime: ${sTime}, eTime: ${eTime}`);
+        // console.log('query:', query);
         connection.query(query, [deviceId, sTime, eTime], (error, results) => {
             if (error) {
                 console.error('Error fetching sensor_data:', error);
