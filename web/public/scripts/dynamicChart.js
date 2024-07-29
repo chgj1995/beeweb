@@ -1,17 +1,17 @@
 let chart_datas = [];
+let chart_list = [];
 // 옵션은 오브젝트 배열로 받기
 
 // ================== 동적 차트 관리 ==================
 
 // 새 차트 블록 추가 함수
-function addChartBlock(chartIndex, selectedOptions) {
+function addChartBlock(selectedOptions = []) {
     const chartGrid = document.querySelector('.chart-grid');
     const chartBlock = document.createElement('div');
     chartBlock.className = 'chart-block';
-    chartBlock.id = `chart${chartIndex}`;
     const checklistHTML = chart_datas.map(data => `
-                <input type="checkbox" id="${data.device.id}" onchange="updateChart(this)">
-                <label>[${data.device.type}] ${data.device.name}(${data.device.hive_name})</label>
+        <input type="checkbox" id="${data.device.id}" ${selectedOptions.includes(String(data.device.id)) ? 'checked' : ''} onchange="updateChart(this)">
+        <label>[${data.device.type}] ${data.device.name}(${data.device.hive})</label>
             `).join('');
 
     chartBlock.innerHTML = `
@@ -38,6 +38,11 @@ function addChartBlock(chartIndex, selectedOptions) {
                 </div>
             `;
     chartGrid.appendChild(chartBlock);
+
+    // 초기 선택된 옵션에 따라 차트 업데이트
+    if (selectedOptions.length > 0) {
+        updateChart(chartBlock.querySelector('input'), false);
+    }
 }
 
 // 차트 블록 삭제 함수
@@ -93,7 +98,7 @@ function updateChecklist(chartBlock, selectedType) {
 }
 
 // 체크박스 상태에 따라 차트 업데이트하는 함수
-function updateChart(checkbox) {
+function updateChart(checkbox, isNeedUpdateURL = true) {
     const chartBlock = checkbox.closest('.chart-block');
     const canvas = chartBlock.querySelector('canvas');
     const ctx = canvas.getContext('2d');
@@ -116,7 +121,8 @@ function updateChart(checkbox) {
     };
 
     updateChartData(ctx, selectedOptions);
-    updateURLParams();
+    
+    if(isNeedUpdateURL) { updateURLParams(); }
 }
 
 // ================== URL 파라미터 관리 ==================
@@ -134,50 +140,14 @@ function updateURLParams() {
 
     // 본문에서 chart 검색
     const chartBlocks = Array.from(document.querySelectorAll('.chart-block'));
-    for(const chart of chartBlocks) {
-        const selectedOptions = Array.from(chart.querySelectorAll('.chart-device-checklist input:checked')).map(cb => cb.id);
-        if(selectedOptions.length > 0) {
-            params.append(chart.id, selectedOptions.join(','));
-        }
-    }
 
-
-    // 기존 chart 파라미터 대체
-    for (const [key, value] of urlSearchParams.entries()) {
-        if (key.startsWith('chart')) {
-
-            // 문서 에서 chart 검색
-            const chartBlock = document.getElementById(key);
-            if (!chartBlock) { // 없으면 삭제
-                params.delete(key);
-            }
-
-
-            // chartBlock에 선택된 옵션들 획득
-            const selectedOptions = Array.from(chartBlock.querySelectorAll('.chart-device-checklist input:checked')).map(cb => cb.id);
-
-
-
-            if (!chartBlock) { // 없으면 삭제
-                params.delete(key);
-            } else { // 있으면 대체
-                const selectedOptions = Array.from(chartBlock.querySelectorAll('.chart-device-checklist input:checked')).map(cb => cb.id);
-                if (selectedOptions.length > 0) {
-                    params.set(key, selectedOptions.join(','));
-                } else {
-                    params.delete(key);
-                }
-            }
-        }
-    }
-
-    // 새로운 chart 파라미터 추가
-    chartBlocks.forEach((block, index) => {
-        const selectedOptions = Array.from(block.querySelectorAll('.chart-device-checklist input:checked')).map(cb => cb.id);
+    for (let i = 0; i < chartBlocks.length; i++) {
+        const selectedOptions = Array.from(chartBlocks[i].querySelectorAll('.chart-device-checklist input:checked')).map(cb => cb.id);
         if (selectedOptions.length > 0) {
-            params.append(`${block.id}`, selectedOptions.join(','));
+            console.log(`Chart ${i + 1}:`, selectedOptions);
+            params.append(`chart${i + 1}`, selectedOptions.join(','));
         }
-    });
+    }
 
     const newURL = window.location.pathname + '?' + params.toString();
     window.history.replaceState(null, '', newURL);
@@ -187,33 +157,23 @@ function updateURLParams() {
 async function fetchAndRenderCharts() {
     const urlSearchParams = new URLSearchParams(window.location.search);
 
+    chart_list = [];
+
+        // URL 파라미터로부터 chart_list 배열 생성
     for (const [key, value] of urlSearchParams.entries()) {
         if (key.startsWith('chart')) {
-
-            // chartN에서 N값 획득
-            const chartIndex = key.replace('chart', '');
-
-            const selectedOptions = value.split(',');
-            addChartBlock(chartIndex, selectedOptions);
-            
-            console.log(`Key: ${key}, Value: ${value}, Selected Options: ${selectedOptions}`);
+            const id = parseInt(key.replace('chart', ''), 10); // chart1 -> 1
+            const selectedOptions = value.split(',').map(Number); // "2,3" -> [2, 3]
+            chart_list.push({ id, value: selectedOptions });
         }
+    }
+
+    for (const chart of chart_list) {
+        addChartBlock(chart.value);
     }
 }
 
 // ================== 이벤트 리스너 ==================
-
-document.addEventListener('DOMContentLoaded', () => {
-
-    // // 차트 블록에 이벤트 리스너 추가
-    // document.querySelectorAll('.chart-device-checklist input').forEach(checkbox => {
-    //     checkbox.addEventListener('change', () => {
-    //         updateChart(checkbox);
-    // });
-    // });
-});
-
-// ================== 차트에서 쓸 테스트용 이벤트 리스너 ==================
 // 디바이스 로드 완료 시
 document.addEventListener('dataUpdated', (event) => {
     console.log('dataLoaded:', event.detail);
