@@ -30,7 +30,7 @@ async function fetchDataList() {
             const tempData = data.map(d => ({id:d.id, value: d.temp, time: d.time}));
             const humiData = data.map(d => ({id:d.id, value: d.humi, time: d.time}));
             const co2Data = data.map(d => ({id:d.id, value: d.co2, time: d.time}));
-            const weightData = data.map(d => ({id:d.id, value: d.weight, time: d.time}));
+            const weightData = data.map(d => ({id:d.id, value: d.weigh, time: d.time}));
             
             const tempDevice = {id: i++, type: 'Temp', hive_name: device.hive_name, name: device.name};
             const humiDevice = {id: i++, type: 'Humi', hive_name: device.hive_name, name: device.name};
