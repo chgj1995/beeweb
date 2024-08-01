@@ -22,6 +22,7 @@
     top: 40px;
     /* Adjust based on your design */
     left: 10px;
+    z-index: 5; /* 필요에 따라 조정 */
 }
 
 .chart-grid {
@@ -51,6 +52,7 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    z-index: 3; /* chart-device-checklist보다 낮게 설정 */
 }
 
 .slider-container div {

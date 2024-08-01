@@ -12,7 +12,6 @@ function addChartBlock(selectedOptions = []) {
     const chartBlock = document.createElement('div');
     chartBlock.className = 'chart-block';
     chartBlock.id = `chart${chart_index++}`;
-    console.log('Selected options:', selectedOptions);
 
     const checklistHTML = chart_datas.map(data => {
         const isChecked = selectedOptions.includes(String(data.device.id)) ? 'checked' : '';
@@ -114,20 +113,11 @@ function updateChecklist(chartBlock, selectedType) {
 
     checklist.innerHTML = checklistHTML;
 }
-function createChartWithDynamicPadding(chartRef, ctx, labels, datasets, minTime, maxTime, yMin, yMax) {
-    console.log('chartRef1');
-    console.log(chartRef);
-    console.log(ctx);
 
+function createChartWithDynamicPadding(chartRef, ctx, labels, datasets, minTime, maxTime, yMin, yMax) {
     if (chartRef) {
         chartRef.destroy();
     }
-
-    console.log('chartRef2');
-    console.log(chartRef);
-    console.log(ctx);
-
-    console.log(`yMin: ${yMin}, yMax: ${yMax}`);
 
     function getTimeUnit(minTime, maxTime) {
         const timeDiff = (new Date(maxTime) - new Date(minTime)) / 1000; // 시간 차이 (초 단위)
@@ -212,26 +202,20 @@ function createChartWithDynamicPadding(chartRef, ctx, labels, datasets, minTime,
         }
     });
 
-    console.log('chartRef3');
-    console.log(chartRef);
-    console.log(ctx);
-
     return chartRef;
 }
+let colorIndex = 0;
 
-// Helper function to get random color
-function getRandomColor(alpha = 1) {
-    const r = Math.floor(Math.random() * 255);
-    const g = Math.floor(Math.random() * 255);
-    const b = Math.floor(Math.random() * 255);
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+function getNextColor() {
+    const colors = ['#36a2eb', '#ff6384', '#4bc0c0', '#ff9f40', '#9966ff', '#ffcd56', '#c9cbcf'];
+    const color = colors[colorIndex];
+    colorIndex = (colorIndex + 1) % colors.length;
+    return color;
 }
 
 function initializeSlider(chartBlock, min, max, updateCallback) {
     const slider = chartBlock.querySelector('.y-axis-range');
-    console.log('min:', min);
-    console.log('max:', max);
-
+    
     // 슬라이더가 이미 초기화되어 있는지 확인
     if (slider.noUiSlider) {
         slider.noUiSlider.updateOptions({
@@ -256,9 +240,8 @@ function initializeSlider(chartBlock, min, max, updateCallback) {
 
         slider.noUiSlider.on('update', function(values, handle) {
             // 반환된 값을 소수점 첫째 자리까지만 표시
-            console.log(`Slider values: ${values}`);
             const roundedValues = values.map(value => parseFloat(value).toFixed(1));
-            console.log(`Rounded values: ${roundedValues}`);
+            console.log(`Slider values min: ${roundedValues[0]}, max: ${roundedValues[1]}`);
             updateCallback(roundedValues);
         });
     }
@@ -270,16 +253,12 @@ function getValueRangeFromDatas(datas) {
 
     if (datas.length > 0) {
         const dataValues = datas.flatMap(dataItem => dataItem.data.map(d => d.value));
-        console.log('dataValues1:', dataValues);
         if (dataValues.length > 0) {
-            console.log('dataValues2:', dataValues);
             maxValue = Math.max(...dataValues);
             minValue = Math.min(...dataValues);
         }
     }
-
-    console.log('maxValue:', maxValue);
-    console.log('minValue:', minValue);
+    console.log(`maxValue: ${maxValue}, minValue: ${minValue}`);
     return { minValue, maxValue };
 }
 
@@ -302,8 +281,7 @@ function getTimeRangeFromURL() {
       const sTimeDate = new Date(sTime);
       const eTimeDate = new Date(eTime);
 
-      console.log('sTime:', sTime);
-      console.log('eTime:', eTime);
+      console.log(`sTimeDate: ${sTimeDate}, eTimeDate: ${eTimeDate}`);
     return { sTimeDate, eTimeDate };
 }
 
@@ -312,7 +290,6 @@ function initializeChartData(chartBlock) {
     const options = getSelectedOptions(chartBlock);
     const datas = chart_datas.filter(data => options.includes(String(data.device.id)));
     const { minValue, maxValue } = getValueRangeFromDatas(datas);
-    // updateChartData(chartBlock, minValue, maxValue);
 
     return { minValue, maxValue };
 }
@@ -328,15 +305,18 @@ function updateChartData(chartBlock, minValue, maxValue) {
     // 시간 획득
     const { sTimeDate, eTimeDate } = getTimeRangeFromURL();
 
-    const datasets = datas.map(dataItem => ({
-        label: `[${dataItem.device.type}] ${dataItem.device.name}(${dataItem.device.hive_name})`,
-        data: dataItem.data.map(d => ({ x: new Date(d.time), y: d.value })),
-        borderColor: getRandomColor(),
-        backgroundColor: getRandomColor(0.2),
-        fill: false,
-        pointRadius: 0,
-        borderWidth: 1
-    }));
+    const datasets = datas.map((dataItem) => {
+        const color = getNextColor();
+        return {
+            label: `[${dataItem.device.type}] ${dataItem.device.name}(${dataItem.device.hive_name})`,
+            data: dataItem.data.map(d => ({ x: new Date(d.time), y: d.value })),
+            borderColor: color,
+            backgroundColor: color,
+            fill: false,
+            pointRadius: 0,
+            borderWidth: 1
+        };
+    });
 
     let chartRefEntry = chart_refs.find(ref => ref.id === id);
     let chartRef = chartRefEntry?.value;
@@ -368,9 +348,11 @@ function updateChart(checkbox, isNeedUpdateURL = true) {
         updateChecklist(chartBlock, null);
     }
 
-    const { minValue, maxValue } = initializeChartData(chartBlock);
-    initializeSlider(chartBlock, minValue, maxValue, (newMinValue, newMaxValue) => {
-        updateChartData(chartBlock, newMinValue, newMaxValue);
+    let { minValue, maxValue } = initializeChartData(chartBlock);
+    initializeSlider(chartBlock, minValue, maxValue, (value) => {
+        minValue = value[0];
+        maxValue = value[1];
+        updateChartData(chartBlock, minValue, maxValue);
     });
 
     if(isNeedUpdateURL) { updateURLParams(); }
