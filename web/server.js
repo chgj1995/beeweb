@@ -21,13 +21,17 @@ app.use('/honeybee/chartjs-adapter-date-fns', express.static(path.join(__dirname
 // Create a router for /honeybee
 const honeybeeRouter = express.Router();
 
-honeybeeRouter.get('/newView', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'newView/newView.html'));
+honeybeeRouter.get('/hiveView', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'hiveView/hiveView.html'));
 });
 
-// Route to serve the HTML view with query parameters
-honeybeeRouter.get('/view', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'view.html'));
+honeybeeRouter.get('/compareView', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'compareView/compareView.html'));
+});
+
+// Route to serve the index page
+honeybeeRouter.get('/', (req, res) => {
+  res.redirect('/honeybee/hiveView');
 });
 
 // Route to serve the HTML view with query parameters
@@ -35,10 +39,7 @@ honeybeeRouter.get('/test', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'test.html'));
 });
 
-// Route to serve the index page
-honeybeeRouter.get('/', (req, res) => {
-  res.redirect('/honeybee/view');
-});
+
 
 // Proxy API requests to the backend API
 honeybeeRouter.use('/api', createProxyMiddleware({

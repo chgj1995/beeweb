@@ -1,0 +1,82 @@
+.chart-header,
+.chart-body {
+    padding: 10px;
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
+}
+
+.chart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+}
+
+.chart-device-checklist {
+    display: none;
+    position: absolute;
+    background: #fff;
+    border: 1px solid #ccc;
+    padding: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    top: 40px;
+    /* Adjust based on your design */
+    left: 10px;
+    z-index: 5; /* 필요에 따라 조정 */
+}
+
+.chart-grid {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 1rem;
+    justify-content: space-between;
+}
+
+.chart-block {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 calc(50% - 10px);
+    margin-bottom: 20px;
+    box-sizing: border-box;
+    position: relative;
+}
+
+.chart-body {
+    display: flex;
+    flex-direction: row; /* 변경된 부분 */
+}
+
+.slider-container {
+    width: 10%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 3; /* chart-device-checklist보다 낮게 설정 */
+}
+
+.slider-container div {
+    height: 300px;
+}
+
+.chart-container {
+    flex: 1;
+    height: 300px;
+}
+
+canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.noUi-tooltip {
+    display: none !important; /* 툴팁을 숨깁니다 */
+}
+
+.noUi-vertical .noUi-handle {
+    width: 20px !important;
+    height: 20px !important;
+    left: -10px !important;
+    bottom: -10px !important;
+}

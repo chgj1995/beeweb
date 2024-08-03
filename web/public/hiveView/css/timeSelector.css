@@ -1,0 +1,10 @@
+.time-selector {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+    background: #f9f9f9;
+}
+.time-selector button {
+    margin: 0 0.5rem;
+}

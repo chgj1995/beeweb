@@ -12,9 +12,10 @@ function addChartBlock(selectedOptions = []) {
     const chartBlock = document.createElement('div');
     chartBlock.className = 'chart-block';
     chartBlock.id = `chart${chart_index++}`;
+    console.log('Adding chart block:', chartBlock.id);
 
     const checklistHTML = chart_datas.map(data => {
-        const isChecked = selectedOptions.includes(String(data.device.id)) ? 'checked' : '';
+        const isChecked = selectedOptions.includes(Number(data.device.id)) ? 'checked' : '';
         return `
             <input type="checkbox" id="${data.device.id}" ${isChecked} onchange="updateChart(this)">
             <label>[${data.device.type}] ${data.device.name}(${data.device.hive_name})</label>
@@ -65,7 +66,7 @@ function deleteChartBlock(button, isNeedUpdateURL = true) {
     }
 
     chartBlock.remove();
-    if(isNeedUpdateURL) { updateURLParams(); }
+    // if(isNeedUpdateURL) { updateURLParams(); }
 }
 
 // ================== 차트 아이템 관리 ==================
@@ -218,33 +219,36 @@ function initializeSlider(chartBlock, min, max, updateCallback) {
     
     // 슬라이더가 이미 초기화되어 있는지 확인
     if (slider.noUiSlider) {
-        slider.noUiSlider.updateOptions({
-            range: {
-                'min': min,
-                'max': max
-            },
-            start: [min, max]
-        });
-    } else {
-        noUiSlider.create(slider, {
-            start: [min, max],
-            connect: true,
-            orientation: 'vertical', // 세로 슬라이더로 설정
-            direction: 'rtl', // 슬라이더 방향을 반전
-            range: {
-                'min': min,
-                'max': max
-            },
-            step: 1
-        });
-
-        slider.noUiSlider.on('update', function(values, handle) {
-            // 반환된 값을 소수점 첫째 자리까지만 표시
-            const roundedValues = values.map(value => parseFloat(value).toFixed(1));
-            console.log(`Slider values min: ${roundedValues[0]}, max: ${roundedValues[1]}`);
-            updateCallback(roundedValues);
-        });
+        // 제거
+        slider.noUiSlider.destroy();
     }
+
+    noUiSlider.create(slider, {
+        start: [min, max],
+        connect: true,
+        orientation: 'vertical', // 세로 슬라이더로 설정
+        direction: 'rtl', // 슬라이더 방향을 반전
+        range: {
+            'min': min,
+            'max': max
+        },
+        step: 1
+    });
+
+    let initialized = false;
+    slider.noUiSlider.on('update', function(values, handle) {
+        // handele은 움직인게 위에꺼(max)는 1, 아래꺼(min)는 0
+
+        if (!initialized) {
+            initialized = true;
+            return; // 초기화 시 호출되는 update 이벤트는 무시
+        }
+
+        // 반환된 값을 소수점 첫째 자리까지만 표시
+        const roundedValues = values.map(value => parseFloat(value).toFixed(1));
+        console.log(`Slider values min: ${roundedValues[0]}, max: ${roundedValues[1]}`);
+        updateCallback(roundedValues);
+    });
 }
 
 function getValueRangeFromDatas(datas) {
@@ -348,6 +352,16 @@ function updateChart(checkbox, isNeedUpdateURL = true) {
         updateChecklist(chartBlock, null);
     }
 
+    // 선택된 Types로 Chart-title 업데이트
+    const chartTitle = chartBlock.querySelector('.chart-title');
+    if (selectedTypes.length > 0) {
+        // 중복된건 제외하고 표시
+        const titleTypes = selectedTypes.filter((type, index) => selectedTypes.indexOf(type) === index);
+        chartTitle.textContent = titleTypes.join(' & ');
+    } else {
+        chartTitle.textContent = 'New Chart';
+    }
+
     let { minValue, maxValue } = initializeChartData(chartBlock);
     initializeSlider(chartBlock, minValue, maxValue, (value) => {
         minValue = value[0];
@@ -355,44 +369,44 @@ function updateChart(checkbox, isNeedUpdateURL = true) {
         updateChartData(chartBlock, minValue, maxValue);
     });
 
-    if(isNeedUpdateURL) { updateURLParams(); }
+    // if(isNeedUpdateURL) { updateURLParams(); }
 }
 
 // ================== URL 파라미터 관리 ==================
 
 // URL 파라미터 업데이트 함수
-function updateURLParams() {
-    const params = new URLSearchParams(window.location.search);
+// function updateURLParams() {
+//     const params = new URLSearchParams(window.location.search);
 
-    let chart_list = [];
+//     let chart_list = [];
 
-    // 본문에서 chart 검색
-    const chartBlocks = Array.from(document.querySelectorAll('.chart-block'));
+//     // 본문에서 chart 검색
+//     const chartBlocks = Array.from(document.querySelectorAll('.chart-block'));
 
-    // chart로부터 chart_list 배열 생성
-    for (let i = 0; i < chartBlocks.length; i++) {
-        const selectedOptions = Array.from(chartBlocks[i].querySelectorAll('.chart-device-checklist input:checked')).map(cb => cb.id);
-        if (selectedOptions.length > 0) {
-            const id = i;
-            chart_list.push({ id, value: selectedOptions });
-        }
-    }
+//     // chart로부터 chart_list 배열 생성
+//     for (let i = 0; i < chartBlocks.length; i++) {
+//         const selectedOptions = Array.from(chartBlocks[i].querySelectorAll('.chart-device-checklist input:checked')).map(cb => cb.id);
+//         if (selectedOptions.length > 0) {
+//             const id = i;
+//             chart_list.push({ id, value: selectedOptions });
+//         }
+//     }
 
-    // Chart 파라미터 초기화
-    for (const key of params.keys()) {
-        if (key.startsWith('chart')) {
-            params.delete(key);
-        }
-    }
+//     // Chart 파라미터 초기화
+//     for (const key of params.keys()) {
+//         if (key.startsWith('chart')) {
+//             params.delete(key);
+//         }
+//     }
 
-    // chart_list 배열을 URL 파라미터로 변환
-    for (const chart of chart_list) {
-        params.set(`chart${chart.id}`, chart.value.join(','));
-    }
+//     // chart_list 배열을 URL 파라미터로 변환
+//     for (const chart of chart_list) {
+//         params.set(`chart${chart.id}`, chart.value.join(','));
+//     }
 
-    const newURL = window.location.pathname + '?' + params.toString();
-    window.history.replaceState(null, '', newURL);
-}
+//     const newURL = window.location.pathname + '?' + params.toString();
+//     window.history.replaceState(null, '', newURL);
+// }
 
 // URL 파라미터로부터 차트 렌더링 함수
 async function fetchAndRenderCharts() {
@@ -400,14 +414,48 @@ async function fetchAndRenderCharts() {
 
     chart_list = [];
 
-        // URL 파라미터로부터 chart_list 배열 생성
-    for (const [key, value] of urlSearchParams.entries()) {
-        if (key.startsWith('chart')) {
-            const id = parseInt(key.replace('chart', ''), 10); // chart1 -> 1
-            const selectedOptions = value.split(','); // "2,3" -> ["2", "3"]
-            chart_list.push({ id, value: selectedOptions });
+    // hiveView에서는 hiveId로부터 devices를 추출해서 event가 발생됨
+    // event_detail은 해당 hive의 모든 device를 담고 있으며
+    // chart_datas = event_detail로부터 각 type에 대해 1개씩 차트를 만듬
+    // 각 조합별로 1개씩 차트를 만듬
+
+    let chart_inOut = { id: 1, value: [] };
+    let chart_temp = { id: 2, value: [] };
+    let chart_humi = { id: 3, value: [] };
+    let chart_co2 = { id: 4, value: [] };
+    let chart_weight = { id: 5, value: [] };
+
+    if(chart_datas.length == 0) { return; }
+    
+    for(const data of chart_datas) {
+
+        // In & Out
+        if(data.device.type == 'In' || data.device.type == 'Out') {
+            chart_inOut.value.push(data.device.id);
+        }
+        // Temp
+        else if(data.device.type == 'Temp') {
+            chart_temp.value.push(data.device.id);
+        }
+        // Humi
+        else if(data.device.type == 'Humi') {
+            chart_humi.value.push(data.device.id);
+        }
+        // CO2
+        else if(data.device.type == 'CO2') {
+            chart_co2.value.push(data.device.id);
+        }
+        // Weigh
+        else if(data.device.type == 'Weight') {
+            chart_weight.value.push(data.device.id);
         }
     }
+
+    if(chart_inOut.value.length > 0) { chart_list.push(chart_inOut); }
+    if(chart_temp.value.length > 0) { chart_list.push(chart_temp); }
+    if(chart_humi.value.length > 0) { chart_list.push(chart_humi); }
+    if(chart_co2.value.length > 0) { chart_list.push(chart_co2); }
+    if(chart_weight.value.length > 0) { chart_list.push(chart_weight); }
 
     // 기존 차트 전부 삭제
     const chartBlocks = Array.from(document.querySelectorAll('.chart-block'));
