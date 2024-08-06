@@ -17,7 +17,7 @@
 
         .container {
             display: flex;
-            justify-content: space-around;
+            justify-content: center;
             align-items: center;
             flex: 1;
             padding: 20px;
@@ -34,27 +34,41 @@
 
         .button-container {
             display: flex;
-            justify-content: space-around;
             width: 100%;
+            max-width: 1200px;
+            gap: 20px;
         }
 
         .button-container button {
-            padding: 30px 50px;
+            padding: 30px;
             font-size: 24px;
-            background-color: rgb(255,151,0);
+            background-color: rgb(255, 151, 0);
             color: white;
             border: 2px solid #ff8c00;
             border-radius: 15px;
             cursor: pointer;
             transition: background-color 0.3s;
-            flex-grow: 1;
-            margin: 0 20px;
+            flex: 1;
             text-align: center;
             font-weight: bold;
         }
 
         .button-container button:hover {
             background-color: #e07b00;
+        }
+
+        @media (max-width: 768px) {
+            .button-container {
+                flex-direction: column;
+            }
+
+            .button-container button {
+                margin-bottom: 10px;
+            }
+
+            .button-container button:last-child {
+                margin-bottom: 0;
+            }
         }
     </style>
 </head>
@@ -68,8 +82,8 @@
     <!-- Button Container -->
     <div class="container">
         <div class="button-container">
-            <button onclick="location.href='hiveView.html'">HiveView</button>
-            <button onclick="location.href='compareView.html'">Compare View</button>
+            <button onclick="location.href='/honeybee/hiveView'">HiveView</button>
+            <button onclick="location.href='/honeybee/compareView'">Compare View</button>
         </div>
     </div>
 

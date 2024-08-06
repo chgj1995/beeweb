@@ -31,7 +31,7 @@ honeybeeRouter.get('/compareView', (req, res) => {
 
 // Route to serve the index page
 honeybeeRouter.get('/', (req, res) => {
-  res.redirect('/honeybee/hiveView');
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Route to serve the HTML view with query parameters
