@@ -66,7 +66,8 @@ const getAreasAndHives = (connection) => {
             });
 
             const areas = Object.values(areasMap);
-            resolve(areas);
+            console.log(`Fetched ${areas.length} areas and ${results.length} hives`);
+            return resolve(areas);
         });
     });
 };
@@ -74,32 +75,6 @@ const getAreasAndHives = (connection) => {
 // =============================
 // DEVICES
 // =============================
-// Devices를 조회하는 함수
-const getDevicesByHiveId = (connection, hiveId) => {
-    return new Promise((resolve, reject) => {
-        const query = 'SELECT id, type_id FROM devices WHERE hive_id = ?';
-        connection.query(query, [hiveId], (error, results) => {
-            if (error) {
-                console.error('Error fetching devices:', error);
-                return reject(error);
-            }
-            resolve(results.map(device => ({ id: device.id, type: device.type_id })));
-        });
-    });
-};
-
-const checkDevice = (connection, id, type) => {
-    return new Promise((resolve, reject) => {
-        const query = 'SELECT id FROM devices WHERE id = ? AND type_id = ?';
-        connection.query(query, [id, type], (error, results) => {
-            if (error) {
-                console.error('Error checking device:', error);
-                return reject(error);
-            }
-            resolve(results);
-        });
-    });
-};
 
 
 // =============================
@@ -125,7 +100,7 @@ const processBatch = async (connection, query, data, batchSize) => {
                     console.error('Error processing batch:', error);
                     return reject(error);
                 }
-                resolve(results);
+                return resolve(results);
             });
         });
         totalProcessedCount += batch.length;
@@ -173,7 +148,8 @@ const getInOutDataByDeviceAndTimeRange = (connection, deviceId, sTime, eTime) =>
                 console.error('Error fetching inout_data:', error.sqlMessage || error);
                 return reject(error);
             }
-            resolve(results);
+            console.log(`Fetched ${results.length} rows of inout data for device ${deviceId}`);
+            return resolve(results);
         });
     });
 };
@@ -224,12 +200,15 @@ const getSensorDataByDeviceAndTimeRange = (connection, deviceId, sTime, eTime) =
         WHERE device_id = ? AND time BETWEEN ? AND ?
         ORDER BY time DESC
       `;
+        // console.log(`deviceId: ${deviceId}, sTime: ${sTime}, eTime: ${eTime}`);
+        // console.log('query:', query);
         connection.query(query, [deviceId, sTime, eTime], (error, results) => {
             if (error) {
                 console.error('Error fetching sensor_data:', error);
                 return reject(error);
             }
-            resolve(results);
+            console.log(`Fetched ${results.length} rows of sensor data for device ${deviceId}`);
+            return resolve(results);
         });
     });
 };
@@ -283,7 +262,8 @@ const getCameraDataByDeviceAndTimeRange = (connection, deviceId, sTime, eTime) =
                 console.error('Error fetching camera_data:', error);
                 return reject(error);
             }
-            resolve(results);
+            console.log(`Fetched ${results.length} rows of camera data for device ${deviceId}`);
+            return resolve(results);
         });
     });
 };
@@ -313,6 +293,20 @@ const insertCameraData = async (connection, data) => {
 // =============================
 // HIVE
 // =============================
+const getHivesByAreaId = (connection, areaId) => {
+    return new Promise((resolve, reject) => {
+        const query = 'SELECT id, name FROM hives WHERE area_id = ?';
+        connection.query(query, [areaId], (error, results) => {
+            if (error) {
+                console.error('Error fetching hives:', error);
+                return reject(error);
+            }
+            console.log(`Fetched ${results.length} hives for area ${areaId}`);
+            return resolve(results);
+        });
+    });
+};
+
 const addHive = (connection, areaId, name) => {
     return new Promise((resolve, reject) => {
         // 먼저 중복 체크
@@ -324,7 +318,8 @@ const addHive = (connection, areaId, name) => {
             }
             if (checkResults.length > 0) {
                 // 이미 존재하는 경우
-                resolve({ existing: true, hiveId: checkResults[0].id });
+                console.log(`Hive already exists: ${checkResults[0].id} (area: ${areaId}, name: ${name})`);
+                return resolve({ existing: true, hiveId: checkResults[0].id });
             } else {
                 // 존재하지 않으면 새로 삽입
                 const insertQuery = 'INSERT INTO hives (area_id, name) VALUES (?, ?)';
@@ -333,49 +328,137 @@ const addHive = (connection, areaId, name) => {
                         console.error('Error adding hive:', insertError);
                         return reject(insertError);
                     }
-                    resolve({ existing: false, hiveId: insertResults.insertId });
+                    console.log(`Inserted hive: ${insertResults.insertId} (area: ${areaId}, name: ${name})`);
+                    return resolve({ existing: false, hiveId: insertResults.insertId });
                 });
             }
         });
     });
 };
 
+const deleteHive = (connection, hiveId) => {
+    return new Promise((resolve, reject) => {
+        const query = 'DELETE FROM hives WHERE id = ?';
+        connection.query(query, [hiveId], (error, results) => {
+            if (error) {
+                console.error('Error deleting hive:', error);
+                return reject(error);
+            }
+            if(results.affectedRows === 0) {
+                console.log(`Hive not found: ${hiveId}`);
+                return resolve({ deleted: false, hiveId: hiveId });
+            }
+            console.log(`Deleted hive: ${hiveId}`);
+            return resolve({ deleted: true, hiveId: hiveId});
+        });
+    });
+};
 
 // =============================
 // DEVICE
 // =============================
-/**
- * @typedef {Object} UploadData
- * @property {number} id - 장치의 Id를 나타냅니다.
- * @property ... - 다른 필드들은 각 장치 타입에 따라 다릅니다.
- */
 
-const addDevice = (connection, hiveId, typeId) => {
+// Device 목록을 조회하는 함수
+const getDevicesByHiveId = (connection, hiveId) => {
+    return new Promise((resolve, reject) => {
+        const query = 'SELECT id, name, type_id FROM devices WHERE hive_id = ?';
+        connection.query(query, [hiveId], (error, results) => {
+            if (error) {
+                console.error('Error fetching devices:', error);
+                return reject(error);
+            }
+            console.log(`Fetched ${results.length} devices for hive ${hiveId}`);
+            return resolve(results);
+        });
+    });
+};
+
+const getDeviceByDeviceId = (connection, deviceIds) => {
+    return new Promise((resolve, reject) => {
+
+        // deviceIds가 배열이 아닌 경우 배열로 변환
+        if (!Array.isArray(deviceIds)) {
+            deviceIds = [deviceIds];
+        }
+
+        // 쿼리 문자열과 파라미터 배열 생성
+        const query = `SELECT id, name, hive_id, type_id FROM devices WHERE id IN (${deviceIds.map(() => '?').join(',')})`;
+        const params = deviceIds;
+        connection.query(query, params, (error, results) => {
+            if (error) {
+                console.error('Error fetching devices:', error);
+                return reject(error);
+            }
+            console.log(`Fetched ${results.length} devices for device ${deviceIds}`);
+            return resolve(results);
+        });
+    });
+};
+
+
+// 해당 type의 장치 id가 있는지 확인
+const checkDevice = (connection, id, type) => {
+    return new Promise((resolve, reject) => {
+        const query = 'SELECT id FROM devices WHERE id = ? AND type_id = ?';
+        connection.query(query, [id, type], (error, results) => {
+            if (error) {
+                console.error('Error checking device:', error);
+                return reject(error);
+            }
+            console.log(`Checked device: ${id} (type: ${type})`);
+            return resolve(results);
+        });
+    });
+};
+
+const addDevice = (connection, name, hiveId, typeId) => {
     return new Promise((resolve, reject) => {
         // 먼저 중복 체크
-        const checkQuery = 'SELECT id FROM devices WHERE hive_id = ? AND type_id = ?';
-        connection.query(checkQuery, [hiveId, typeId], (checkError, checkResults) => {
+        const checkQuery = 'SELECT id FROM devices WHERE name = ? AND hive_id = ? AND type_id = ?';
+        connection.query(checkQuery, [name, hiveId, typeId], (checkError, checkResults) => {
             if (checkError) {
                 console.error('Error checking device:', checkError);
                 return reject(checkError);
             }
             if (checkResults.length > 0) {
                 // 이미 존재하는 경우
-                resolve({ existing: true, deviceId: checkResults[0].id });
+                console.log(`Device already exists: ${checkResults[0].id} (name: ${name}, hive: ${hiveId}, type: ${typeId})`);
+                return resolve({ existing: true, deviceId: checkResults[0].id });
             } else {
                 // 존재하지 않으면 새로 삽입
-                const insertQuery = 'INSERT INTO devices (hive_id, type_id) VALUES (?, ?)';
-                connection.query(insertQuery, [hiveId, typeId], (insertError, insertResults) => {
+                const insertQuery = 'INSERT INTO devices (name, hive_id, type_id) VALUES (?, ?, ?)';
+                connection.query(insertQuery, [name, hiveId, typeId], (insertError, insertResults) => {
                     if (insertError) {
                         console.error('Error adding device:', insertError);
                         return reject(insertError);
                     }
-                    resolve({ existing: false, deviceId: insertResults.insertId });
+                    console.log(`Inserted device: ${insertResults.insertId} (name: ${name}, hive: ${hiveId}, type: ${typeId})`);
+                    return resolve({ existing: false, deviceId: insertResults.insertId });
                 });
             }
         });
     });
 };
+
+const deleteDevice = (connection, deviceId) => {
+    return new Promise((resolve, reject) => {
+        const query = 'DELETE FROM devices WHERE id = ?';
+        connection.query(query, [deviceId], (error, results) => {
+            if (error) {
+                console.error('Error deleting device:', error);
+                return reject(error);
+            }
+
+            if(results.affectedRows === 0) {
+                console.log(`Device not found: ${deviceId}`);
+                return resolve({ deleted: false, deviceId: deviceId });
+            }
+            console.log(`Deleted device: ${deviceId}`);
+            return resolve({ deleted: true, deviceId: deviceId });
+        });
+    });
+};
+
 
 /**
  * 각 device의 IP 주소를 업데이트하는 함수
@@ -397,7 +480,7 @@ const updateDeviceIP = async (connection, data, ip) => {
                         console.error(`Error updating IP for device ${deviceId}:`, error);
                         return reject(error);
                     }
-                    resolve(results);
+                    return resolve(results);
                 });
             });
         }
@@ -409,16 +492,27 @@ const updateDeviceIP = async (connection, data, ip) => {
 
 module.exports = {
     createDbConnection,
-    getAreasAndHives,
-    getDevicesByHiveId,
-    getInOutDataByDeviceAndTimeRange,
-    getSensorDataByDeviceAndTimeRange,
-    getCameraDataByDeviceAndTimeRange,
-    insertInOutData,
-    insertSensorData,
-    insertCameraData,
     checkDevice,
     updateDeviceIP,
+
+    // =====
+    getAreasAndHives,
+    // =====
+    getHivesByAreaId,
     addHive,
-    addDevice
+    deleteHive,
+    // =====
+    getDevicesByHiveId,
+    getDeviceByDeviceId,
+    addDevice,
+    deleteDevice,
+    // =====
+    insertInOutData,
+    getInOutDataByDeviceAndTimeRange,
+    // =====
+    insertSensorData,
+    getSensorDataByDeviceAndTimeRange,
+    // =====
+    insertCameraData,
+    getCameraDataByDeviceAndTimeRange
 };

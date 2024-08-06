@@ -1,0 +1,43 @@
+.area-selector,
+.hive-selector {
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
+}
+
+.area-selector {
+    margin-left: 0;
+}
+
+.hive-selector {
+    margin-left: 20px;
+}
+
+.area-selector .header,
+.hive-selector .header {
+    display: flex;
+    align-items: center;
+    position: relative;
+    padding: 10px;
+    background: #f9f9f9;
+    border-bottom: 1px solid #ccc;
+}
+
+.area-selector .body,
+.hive-selector .body {
+    padding: 10px;
+}
+
+.area-selector .header button,
+.hive-selector .header button {
+    margin-right: 10px;
+}
+
+.selector-device-checklist {
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: 10px;
+}
+
+.selector-device-checklist .device {
+    margin-right: 20px;
+}

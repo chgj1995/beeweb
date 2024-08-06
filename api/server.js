@@ -240,6 +240,21 @@ app.listen(3000, () => {
 // =============================
 // HIVE
 // =============================
+app.get('/api/hive', async (req, res) => {
+  const { areaId } = req.query;
+
+  if (!areaId) {
+    return res.status(400).send('Bad Request: Missing areaId');
+  }
+
+  try {
+    const hives = await database.getHivesByAreaId(dbConnection, areaId);
+    return res.status(200).json(hives);
+  } catch (error) {
+    console.error('Error fetching hives:', error);
+    return res.status(500).send('Internal Server Error');
+  }
+});
 
 app.post('/api/hive', async (req, res) => {
   const { areaId, name } = req.body;
@@ -261,10 +276,7 @@ app.post('/api/hive', async (req, res) => {
   }
 });
 
-// =============================
-// DEVICE
-// =============================
-app.get('/api/device', async (req, res) => {
+app.delete('/api/hive', async (req, res) => {
   const { hiveId } = req.query;
 
   if (!hiveId) {
@@ -272,23 +284,51 @@ app.get('/api/device', async (req, res) => {
   }
 
   try {
-    const devices = await database.getDevicesByHiveId(dbConnection, hiveId);
+    const result = await database.deleteHive(dbConnection, hiveId);
+    if(result.deleted) {
+      return res.status(200).json({message: 'Hive deleted successfully', hiveId: result.hiveId});
+    } else {
+      return res.status(404).json({message: 'Hive not found', hiveId: result.hiveId});
+    }
+  } catch (error) {
+    console.error('Error deleting hive:', error);
+    return res.status(500).send('Internal Server Error');
+  }
+});
+
+// =============================
+// DEVICE
+// =============================
+app.get('/api/device', async (req, res) => {
+  const { hiveId, deviceId } = req.query;
+
+  if (!hiveId && !deviceId) {
+    return res.status(400).send('Bad Request: Missing hiveId or deviceId');
+  }
+
+  try {
+    let devices;
+    if (deviceId) {
+      devices = await database.getDeviceByDeviceId(dbConnection, deviceId.split(','));
+    } else {
+      devices = await database.getDevicesByHiveId(dbConnection, hiveId);
+    }
     return res.status(200).json(devices);
   } catch (error) {
-    console.error('Error fetching devices:', error);
+    console.error('Error fetching device:', error);
     return res.status(500).send('Internal Server Error');
   }
 });
 
 app.post('/api/device', async (req, res) => {
-  const { hiveId, typeId } = req.body;
+  const { name, hiveId, typeId } = req.body;
 
-  if (!hiveId || !typeId) {
+  if (!name || !hiveId || !typeId) {
     return res.status(400).send('Bad Request: Missing required fields');
   }
 
   try {
-    const result = await database.addDevice(dbConnection, hiveId, typeId);
+    const result = await database.addDevice(dbConnection, name, hiveId, typeId);
     if(result.existing) {
       return res.status(409).json({message: 'Device already exists', deviceId: result.deviceId});
     } else {
@@ -296,6 +336,26 @@ app.post('/api/device', async (req, res) => {
     }
   } catch (error) {
     console.error('Error adding device:', error);
+    return res.status(500).send('Internal Server Error');
+  }
+});
+
+app.delete('/api/device', async (req, res) => {
+  const { deviceId } = req.query;
+
+  if (!deviceId) {
+    return res.status(400).send('Bad Request: Missing deviceId');
+  }
+
+  try {
+    const result = await database.deleteDevice(dbConnection, deviceId);
+    if(result.deleted) {
+      return res.status(200).json({message: 'Device deleted successfully', deviceId: result.deviceId});
+    } else {
+      return res.status(404).json({message: 'Device not found', deviceId: result.deviceId});
+    }
+  } catch (error) {
+    console.error('Error deleting device:', error);
     return res.status(500).send('Internal Server Error');
   }
 });

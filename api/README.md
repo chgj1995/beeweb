@@ -1,476 +1,378 @@
-### Honeybee REST API
+# Honeybee REST API README
 
-이 문서는 Honeybee REST API에서 사용 가능한 엔드포인트와 예제 요청에 대해 설명합니다.
+## 소개
+
+이 문서는 Honeybee REST API 사용에 대한 종합적인 가이드를 제공합니다. API를 사용하여 사용자는 지역, 벌통, 장치 및 꿀벌 활동과 관련된 데이터를 관리할 수 있습니다. 이 README에는 각 엔드포인트에 대한 쿼리 예제와 응답 예제가 포함되어 있습니다.
 
 ## 기본 URL
 
-모든 API 엔드포인트의 기본 URL은 다음과 같습니다:
 ```
-http://{{SERVER_IP}}/honeybee/api
+{{SERVER_IP}}/honeybee/api
 ```
+
+`{{SERVER_IP}}`를 실제 서버 IP 주소로 대체하십시오.
 
 ## 엔드포인트
 
-### 지역 벌집
+### 1. 지역 및 벌통
 
-#### 지역 벌집 조회
+#### 지역 및 벌통 정보 가져오기
+
+**엔드포인트:** `/areahive`  
+**메소드:** `GET`
+
+**요청 예제:**
+```http
+GET {{SERVER_IP}}/honeybee/api/areahive
 ```
-GET /areahive
-```
-- **설명**: 지역 벌집 목록을 조회합니다.
-- **URL**: `{{SERVER_IP}}/honeybee/api/areahive`
-- **메서드**: `GET`
-- **응답**:
-  - **200 OK**:
-    ```json
-    [
-      {
-        "id": 1,
-        "name": "Area 1",
-        "hives": [
-          {
-            "id": 1,
-            "name": "Hive 1"
-          },
-          {
-            "id": 2,
-            "name": "Hive 2"
-          }
-        ]
-      },
-      {
-        "id": 2,
-        "name": "Area 2",
-        "hives": []
-      }
-    ]
-    ```
-  - **500 Internal Server Error**:
-    ```json
+
+**응답 예제:**
+```json
+[
     {
-      "message": "Internal Server Error"
+        "areaId": 1,
+        "areaName": "Area 1",
+        "hives": [
+            {
+                "hiveId": 1,
+                "hiveName": "Hive 1"
+            },
+            {
+                "hiveId": 2,
+                "hiveName": "Hive 2"
+            }
+        ]
     }
-    ```
+]
+```
 
-### 장치
+### 2. 장치
 
 #### 장치 추가
-```
-POST /device
-```
-- **설명**: 새로운 장치를 추가합니다.
-- **URL**: `{{SERVER_IP}}/honeybee/api/device`
-- **메서드**: `POST`
-- **요청 본문**:
-    ```json
-    {
-      "hiveId": 2,
-      "typeId": 1
-    }
-    ```
-- **응답**:
-  - **201 Created**:
-    ```json
-    {
-      "message": "Device added successfully",
-      "deviceId": 5
-    }
-    ```
-  - **400 Bad Request**:
-    ```json
-    {
-      "message": "Bad Request: Missing required fields"
-    }
-    ```
-  - **409 Conflict**:
-    ```json
-    {
-      "message": "Device already exists",
-      "deviceId": 3
-    }
-    ```
-  - **500 Internal Server Error**:
-    ```json
-    {
-      "message": "Internal Server Error"
-    }
-    ```
 
-#### 장치 조회
-```
-GET /device?hiveId=3
-```
-- **설명**: 특정 벌집에 대한 장치 목록을 조회합니다.
-- **URL**: `{{SERVER_IP}}/honeybee/api/device?hiveId=3`
-- **메서드**: `GET`
-- **응답**:
-  - **200 OK**:
-    ```json
-    [
-      {
-        "id": 1,
-        "type": 2
-      },
-      {
-        "id": 2,
-        "type": 1
-      }
-    ]
-    ```
-  - **400 Bad Request**:
-    ```json
-    {
-      "message": "Bad Request: Missing hiveId"
-    }
-    ```
-  - **500 Internal Server Error**:
-    ```json
-    {
-      "message": "Internal Server Error"
-    }
-    ```
+**엔드포인트:** `/device`  
+**메소드:** `POST`
 
-### 벌집
+**요청 예제:**
+```http
+POST {{SERVER_IP}}/honeybee/api/device
+Content-Type: application/json
 
-#### 벌집 추가
+{
+  "hiveId": 2,
+  "typeId": 1
+}
 ```
-POST /hive
-```
-- **설명**: 새로운 벌집을 추가합니다.
-- **URL**: `{{SERVER_IP}}/honeybee/api/hive`
-- **메서드**: `POST`
-- **요청 본문**:
-    ```json
-    {
-      "areaId": 2,
-      "name": "Hive 1"
-    }
-    ```
-- **응답**:
-  - **201 Created**:
-    ```json
-    {
-      "message": "Hive added successfully",
-      "hiveId": 3
-    }
-    ```
-  - **400 Bad Request**:
-    ```json
-    {
-      "message": "Bad Request: Missing required fields"
-    }
-    ```
-  - **409 Conflict**:
-    ```json
-    {
-      "message": "Hive already exists",
-      "hiveId": 2
-    }
-    ```
-  - **500 Internal Server Error**:
-    ```json
-    {
-      "message": "Internal Server Error"
-    }
-    ```
 
-### 데이터
+**응답 예제:**
+```json
+{
+    "message": "Device added successfully",
+    "deviceId": 10
+}
+```
 
-#### 출입 데이터 조회
-```
-GET /inout?deviceId=1&sTime=2024-05-09T13:15:11Z&eTime=2024-07-09T13:15:11Z
-```
-- **설명**: 특정 장치의 출입 데이터를 지정된 시간 범위 내에서 조회합니다.
-- **URL**: `{{SERVER_IP}}/honeybee/api/inout?deviceId=1&sTime=2024-05-09T13:15:11Z&eTime=2024-07-09T13:15:11Z`
-- **메서드**: `GET`
-- **응답**:
-  - **200 OK**:
-    ```json
-    [
-      {
-        "id": 1,
-        "in_field": 10,
-        "out_field": 20,
-        "time": "2024-06-23T10:00:00Z"
-      },
-      {
-        "id": 2,
-        "in_field": 15,
-        "out_field": 25,
-        "time": "2024-06-23T11:00:00Z"
-      }
-    ]
-    ```
-  - **400 Bad Request**:
-    ```json
-    {
-      "message": "Bad Request: Missing required fields"
-    }
-    ```
-  - **500 Internal Server Error**:
-    ```json
-    {
-      "message": "Internal Server Error"
-    }
-    ```
+#### 장치 정보 가져오기
 
-#### 센서 데이터 조회
+**엔드포인트:** `/device`  
+**메소드:** `GET`
+
+**요청 예제:**
+```http
+GET {{SERVER_IP}}/honeybee/api/device?hiveId=3
 ```
-GET /sensor?deviceId=11&sTime=2024-05-09T13:15:11Z&eTime=2024-07-09T13:15:11Z
+
+**응답 예제:**
+```json
+[
+    {
+        "deviceId": 1,
+        "hiveId": 3,
+        "typeId": 1,
+        "typeName": "CAMERA"
+    }
+]
 ```
-- **설명**: 특정 장치의 센서 데이터를 지정된 시간 범위 내에서 조회합니다.
-- **URL**: `{{SERVER_IP}}/honeybee/api/sensor?deviceId=11&sTime=2024-05-09T13:15:11Z&eTime=2024-07-09T13:15:11Z`
-- **메서드**: `GET`
-- **응답**:
-  - **200 OK**:
-    ```json
-    [
-      {
-        "id": 11,
+
+#### 장치 삭제
+
+**엔드포인트:** `/device`  
+**메소드:** `DELETE`
+
+**요청 예제:**
+```http
+DELETE {{SERVER_IP}}/honeybee/api/device?deviceId=25
+```
+
+**응답 예제:**
+```json
+{
+    "message": "Device deleted successfully",
+    "deviceId": 25
+}
+```
+
+### 3. 데이터
+
+#### 카메라 데이터 가져오기
+
+**엔드포인트:** `/camera`  
+**메소드:** `GET`
+
+**요청 예제:**
+```http
+GET {{SERVER_IP}}/honeybee/api/camera?deviceId=7&sTime=2024-05-09T13:15:11Z&eTime=2024-07-09T13:15:11Z
+```
+
+**응답 예제:**
+```json
+[
+    {
+        "deviceId": 7,
+        "time": "2024-06-10T10:00:00Z",
+        "picture": "base64encodedstring"
+    }
+]
+```
+
+#### InOut 데이터 가져오기
+
+**엔드포인트:** `/inout`  
+**메소드:** `GET`
+
+**요청 예제:**
+```http
+GET {{SERVER_IP}}/honeybee/api/inout?deviceId=1&sTime=2024-05-09T13:15:11Z&eTime=2024-07-09T13:15:11Z
+```
+
+**응답 예제:**
+```json
+[
+    {
+        "deviceId": 1,
+        "time": "2024-06-10T10:00:00Z",
+        "inField": 10,
+        "outField": 20
+    }
+]
+```
+
+#### 센서 데이터 가져오기
+
+**엔드포인트:** `/sensor`  
+**메소드:** `GET`
+
+**요청 예제:**
+```http
+GET {{SERVER_IP}}/honeybee/api/sensor?deviceId=24&sTime=2024-05-09T13:15:11Z&eTime=2024-07-09T13:15:11Z
+```
+
+**응답 예제:**
+```json
+[
+    {
+        "deviceId": 24,
+        "time": "2024-06-10T10:00:00Z",
         "temp": 25.5,
         "humi": 60.0,
         "co2": 400,
-        "weigh": 50.0,
-        "time": "2024-06-23T10:00:00Z"
-      },
-      {
-        "id": 12,
-        "temp": 26.0,
-        "humi": 58.0,
-        "co2": 410,
-        "weigh": 51.0,
-        "time": "2024-06-23T11:00:00Z"
-      }
-    ]
-    ```
-  - **400 Bad Request**:
-    ```json
-    {
-      "message": "Bad Request: Missing required fields"
+        "weigh": 50.0
     }
-    ```
-  - **500 Internal Server Error**:
-    ```json
-    {
-      "message": "Internal Server Error"
-    }
-    ```
+]
+```
 
-#### 카메라 데이터 조회
-```
-GET /camera?deviceId=7&sTime=2024-05-09T13:15:11Z&eTime=2024-07-09T13:15:11Z
-```
-- **설명**: 특정 장치의 카메라 데이터를 지정된 시간 범위 내에서 조회합니다.
-- **URL**: `{{SERVER_IP}}/honeybee/api/camera?deviceId=7&sTime=2024-05-09T13:15:11Z&eTime=2024-07-09T13:15:11Z`
-- **메서드**: `GET`
-- **응답**:
-  - **200 OK**:
-    ```json
-    [
-      {
-        "id": 7,
-        "picture": "base64encodedstring",
-        "time": "2024-06-23T10:00:00Z"
-      },
-      {
-        "id": 8,
-        "picture": "base64encodedstring",
-        "time": "2024-06-23T11:00:00Z"
-      }
-    ]
-    ```
-  - **400 Bad Request**:
-    ```json
-    {
-      "message": "Bad Request: Missing required fields"
-    }
-    ```
-  - **500 Internal Server Error**:
-    ```json
-    {
-      "message": "Internal Server Error"
-    }
-    ```
+#### 데이터 업링크
 
-#### 출입 데이터 업로드
-```
-POST /upload
-```
-- **설명**: 출입 데이터를 업로드합니다.
-- **URL**: `{{SERVER_IP}}/honeybee/api/upload`
-- **메서드**: `POST`
-- **요청 본문**:
-    ```json
-    {
-      "type": 3,
-      "data": [
-        {
-          "id": 1,
-          "time": "2024-06-23T10:00:00Z",
-          "inField": 10,
-          "outField": 20
-        },
+**엔드포인트:** `/uplink`  
+**메소드:** `POST`
 
+**요청 예제 (센서 데이터):**
+```http
+POST {{SERVER_IP}}/honeybee/api/uplink
+Content-Type: application/json
 
-        {
-          "id": 2,
-          "time": "2024-06-23T11:00:00Z",
-          "inField": 15,
-          "outField": 25
-        }
-      ]
-    }
-    ```
-- **응답**:
-  - **201 Created**:
-    ```json
-    {
-      "message": "Data inserted successfully"
-    }
-    ```
-  - **400 Bad Request**:
-    ```json
-    {
-      "message": "Bad Request: Missing required fields"
-    }
-    ```
-  - **500 Internal Server Error**:
-    ```json
-    {
-      "message": "Internal Server Error"
-    }
-    ```
+{
+  "id": 11,
+  "type": 2,
+  "temp": 11,
+  "humi": 12,
+  "co2": 13,
+  "weigh": 14
+}
+```
 
-#### 출입 데이터 업링크
+**응답 예제:**
+```json
+{
+    "message": "Data inserted successfully"
+}
 ```
-POST /uplink
-```
-- **설명**: 출입 데이터를 업링크합니다.
-- **URL**: `{{SERVER_IP}}/honeybee/api/uplink`
-- **메서드**: `POST`
-- **요청 본문**:
-    ```json
-    {
-      "id": 3,
-      "type": 3,
-      "inField": 10,
-      "outField": 10
-    }
-    ```
-- **응답**:
-  - **201 Created**:
-    ```json
-    {
-      "message": "Data inserted successfully"
-    }
-    ```
-  - **400 Bad Request**:
-    ```json
-    {
-      "message": "Bad Request: Missing required fields"
-    }
-    ```
-  - **500 Internal Server Error**:
-    ```json
-    {
-      "message": "Internal Server Error"
-    }
-    ```
 
-#### 센서 데이터 업링크
+**요청 예제 (InOut 데이터):**
+```http
+POST {{SERVER_IP}}/honeybee/api/uplink
+Content-Type: application/json
+
+{
+  "id": 2,
+  "type": 3,
+  "inField": 10,
+  "outField": 10
+}
 ```
-POST /uplink
+
+**응답 예제:**
+```json
+{
+    "message": "Data inserted successfully"
+}
 ```
-- **설명**: 센서 데이터를 업링크합니다.
-- **URL**: `{{SERVER_IP}}/honeybee/api/uplink`
-- **메서드**: `POST`
-- **요청 본문**:
-    ```json
+
+#### 데이터 업로드
+
+**엔드포인트:** `/upload`  
+**메소드:** `POST`
+
+**요청 예제 (센서 데이터):**
+```http
+POST {{SERVER_IP}}/honeybee/api/upload
+Content-Type: application/json
+
+{
+  "type": 2,
+  "data": [
+    {
+      "id": 10,
+      "time": "2024-06-23T10:00:00Z",
+      "temp": 25.5,
+      "humi": 60.0,
+      "co2": 400,
+      "weigh": 50.0
+    },
     {
       "id": 11,
-      "type": 2,
-      "temp": 11,
-      "humi": 12,
-      "co2": 13,
-      "weigh": 14
+      "time": "2024-06-23T11:00:00Z",
+      "temp": 26.0,
+      "humi": 58.0,
+      "co2": 410,
+      "weigh": 51.0
     }
-    ```
-- **응답**:
-  - **201 Created**:
-    ```json
-    {
-      "message": "Data inserted successfully"
-    }
-    ```
-  - **400 Bad Request**:
-    ```json
-    {
-      "message": "Bad Request: Missing required fields"
-    }
-    ```
-  - **500 Internal Server Error**:
-    ```json
-    {
-      "message": "Internal Server Error"
-    }
-    ```
-
-#### 센서 데이터 업로드
+  ]
+}
 ```
-POST /upload
+
+**응답 예제:**
+```json
+{
+    "message": "Data inserted successfully"
+}
 ```
-- **설명**: 센서 데이터를 업로드합니다.
-- **URL**: `{{SERVER_IP}}/honeybee/api/upload`
-- **메서드**: `POST`
-- **요청 본문**:
-    ```json
-    {
-      "type": 2,
-      "data": [
-        {
-          "id": 10,
-          "time": "2024-06-23T10:00:00Z",
-          "temp": 25.5,
-          "humi": 60.0,
-          "co2": 400,
-          "weigh": 50.0
-        },
-        {
-          "id": 11,
-          "time": "2024-06-23T11:00:00Z",
-          "temp": 26.0,
-          "humi": 58.0,
-          "co2": 410,
-          "weigh": 51.0
-        }
-      ]
-    }
-    ```
-- **응답**:
-  - **201 Created**:
-    ```json
-    {
-      "message": "Data inserted successfully"
-    }
-    ```
-  - **400 Bad Request**:
-    ```json
-    {
-      "message": "Bad Request: Missing required fields"
-    }
-    ```
-  - **500 Internal Server Error**:
-    ```json
-    {
-      "message": "Internal Server Error"
-    }
-    ```
 
----
+**요청 예제 (InOut 데이터):**
+```http
+POST {{SERVER_IP}}/honeybee/api/upload
+Content-Type: application/json
 
-## 환경 변수
+{
+  "type": 3,
+  "data": [
+    {
+      "id": 1,
+      "time": "2024-06-23T10:00:00Z",
+      "inField": 10,
+      "outField": 20
+    },
+    {
+      "id": 2,
+      "time": "2024-06-23T11:00:00Z",
+      "inField": 15,
+      "outField": 25
+    }
+  ]
+}
+```
 
-- `SERVER_IP`: 서버의 IP 주소.
+**응답 예제:**
+```json
+{
+    "message": "Data inserted successfully"
+}
+```
 
----
-이 문서는 주요 엔드포인트를 다루며, POST 엔드포인트에 대한 예제 요청 본문을 제공합니다. 더 자세한 사용법과 추가 엔드포인트에 대한 내용은 전체 API 문서나 Postman 컬렉션 파일 honeybeeREST.json을 참조하십시오.
+### 4. 벌통
+
+#### 벌통 추가
+
+**엔드포인트:** `/hive`  
+**메소드:** `POST`
+
+**요청 예제:**
+```http
+POST {{SERVER_IP}}/honeybee/api/hive
+Content-Type: application/json
+
+{
+  "areaId": 2,
+  "name": "Hive 1"
+}
+```
+
+**응답 예제:**
+```json
+{
+    "message": "Hive added successfully",
+    "hiveId": 10
+}
+```
+
+#### 벌통 정보 가져오기
+
+**엔드포인트:** `/hive`  
+**메소드:** `GET`
+
+**요청 예제:**
+```http
+GET {{SERVER_IP}}/honeybee/api/hive?areaId=3
+```
+
+**응답 예제:**
+```json
+[
+    {
+        "hiveId": 1,
+        "areaId": 3,
+        "hiveName": "Hive 1"
+    }
+]
+```
+
+#### 벌통 삭제
+
+**엔드포인트:** `/hive`  
+**메소드:** `DELETE`
+
+**요청 예제:**
+```http
+DELETE {{SERVER_IP}}/honeybee/api/hive?hiveId=21
+```
+
+**응답 예제:**
+```json
+{
+    "message": "Hive deleted successfully",
+    "hiveId": 21
+}
+```
+
+## 오류 처리
+
+API는 다음과 같은 오류 코드를 반환합니다:
+
+- `400 Bad Request`: 누락되거나 잘못된 요청 매개변수.
+- `404 Not Found`: 리소스를 찾을 수 없음.
+- `409 Conflict`: 리소스가 이미 존재함.
+- `500 Internal Server Error`: 서버 오류.
+
+## 결론
+
+이 README는 Honeybee REST API와 상호 작용하는 데 필요한 정보를 제공하며, 추가 정보는 Postman Collection honeybeeREST.json을 참고하세요

@@ -19,7 +19,7 @@ const registerHiveAndDevice = async (hiveId) => {
     const hiveDbId = responseHive.data.hiveId;
 
     // Register Device
-    const responseDevice = await axios.post('http://172.17.0.1:8090/api/device', { hiveId: hiveDbId, typeId: 3 }, {
+    const responseDevice = await axios.post('http://172.17.0.1:8090/api/device', { name:`Thingspeak`, hiveId: hiveDbId, typeId: 3 }, {
       validateStatus: function (status) {
         return status === 201 || status === 409; // Resolve only if the status code is 201 or 409
       }

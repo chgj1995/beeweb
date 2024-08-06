@@ -1,0 +1,78 @@
+.area-selector,
+.hive-selector {
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
+}
+
+.area-selector {
+    margin-left: 0;
+}
+
+.hive-selector {
+    margin-left: 20px;
+}
+
+.area-selector .header,
+.hive-selector .header {
+    display: flex;
+    align-items: center;
+    position: relative;
+    padding: 10px;
+    background: #f9f9f9;
+    border-bottom: 1px solid #ccc;
+}
+
+.area-selector .body,
+.hive-selector .body {
+    padding: 10px;
+}
+
+.area-selector .header button,
+.hive-selector .header button {
+    margin-right: 10px;
+}
+
+.selector-device-checklist {
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: 10px;
+}
+
+.selector-device-checklist .device {
+    margin-right: 20px;
+}
+
+
+/* areaHive */
+.areaHive-container {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: flex-start; /* 셀렉터들이 상단에 위치하도록 설정 */
+}
+
+.areaHive-container select {
+    flex: 1; /* 남은 공간을 절반씩 차지하도록 설정 */
+    margin-right: 10px; /* 셀렉터 간 간격 추가 */
+}
+
+.areaHive-container select:last-child {
+    margin-right: 0; /* 마지막 셀렉터의 오른쪽 여백 제거 */
+}
+
+@media (max-width: 600px) {
+    .areaHive-container {
+        flex-direction: column;
+    }
+
+    .areaHive-container select {
+        flex: none;
+        width: 100%;
+        margin-bottom: 10px; /* 아래쪽 여백 추가 */
+    }
+
+    .areaHive-container select:last-child {
+        margin-bottom: 0; /* 마지막 셀렉터의 아래쪽 여백 제거 */
+    }
+}

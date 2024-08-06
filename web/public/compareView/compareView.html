@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>honey bee main</title>
+
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .header,
+        .footer {
+            background-color: #fcefb4;
+            color: #372b2b;
+            text-align: center;
+            padding: 10px 0;
+            font-family: Arial, sans-serif;
+        }
+    </style>
+    <link rel="stylesheet" href="/honeybee/compareView/css/deviceSelector.css">
+    <link rel="stylesheet" href="/honeybee/compareView/css/timeSelector.css">
+    <link rel="stylesheet" href="/honeybee/compareView/css/dynamicChart.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.0/nouislider.min.css" />
+
+    <script src="/honeybee/chart.js/chart.min.js"></script>
+    <script src="/honeybee/chartjs-adapter-date-fns/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="/honeybee/plugin/chartjs-plugin-crosshair.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.0/nouislider.min.js"></script>
+</head>
+
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1>Smart Hive State Viewer</h1>
+    </div>
+
+
+    <!-- chart-view -->
+    <div class="container">
+
+        <!-- device-selector -->
+        <div id="device-selector"></div>
+
+        <!-- time-selector -->
+        <div class="time-selector">
+            <button onclick="setPreset('day')">1일</button>
+            <button onclick="setPreset('week')">1주</button>
+            <button onclick="setPreset('month')">1달</button>
+            시작: <input type="datetime-local" id="startDate">
+            종료: <input type="datetime-local" id="endDate">
+            <button onclick="searchWithTimePeriod()">조회</button>
+        </div>
+
+        <button onclick="addChartBlock()">[+]</button>
+        <div class="chart-grid"></div>
+    </div>
+
+    <!-- 순서 중요[배치(동작)의 역순] Chart -> Fetcher -> Time -> Device -->
+    <script src="/honeybee/compareView/scripts/dynamicChart.js"></script>
+    <script src="/honeybee/compareView/scripts/dataFetcher.js"></script>
+    <script src="/honeybee/compareView/scripts/timeSelector.js"></script>
+    <script src="/honeybee/compareView/scripts/deviceSelector.js"></script>
+
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>Wireless Communication LAB, Dept of Embedded System Engineering, Incheon National University</p>
+    </div>
+</body>
+
+</html>
