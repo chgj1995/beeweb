@@ -25,7 +25,8 @@ function setPreset(period) {
             startDate = new Date(endDate.getTime() - 7 * 24 * 60 * 60 * 1000);
             break;
         case 'month':
-            startDate = new Date(endDate.setMonth(endDate.getMonth() - 1));
+            startDate = new Date(endDate); // endDate 복사본 생성
+            startDate.setMonth(endDate.getMonth() - 1);
             break;
     }
   
