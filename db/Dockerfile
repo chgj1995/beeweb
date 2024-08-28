@@ -1,5 +1,5 @@
 # Docker Hub에서 공식 MariaDB 이미지를 사용
-FROM mariadb:11.4.2
+FROM mariadb:11.4
 
 # MariaDB 환경 변수 설정
 ENV MYSQL_ROOT_PASSWORD=rootpassword
