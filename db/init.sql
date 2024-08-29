@@ -75,6 +75,17 @@ INSERT INTO device_types (id, name) VALUES
     (3, 'INOUT')
 ON DUPLICATE KEY UPDATE name = VALUES(name);
 
+-- ACCOUNTS 테이블 생성 및 초기 데이터 삽입
+CREATE TABLE IF NOT EXISTS accounts (
+    id VARCHAR(255) NOT NULL PRIMARY KEY,
+    pw VARCHAR(64) NOT NULL,
+    grade INT NOT NULL
+);
+
+INSERT INTO accounts (id, pw, grade) VALUES
+    ('admin', '1234', 1)
+ON DUPLICATE KEY UPDATE pw = VALUES(pw), grade = VALUES(grade);
+
 -- 제약조건 및 인덱스 설정
 ALTER TABLE inout_data
     ADD CONSTRAINT fk_inout_device FOREIGN KEY (device_id) REFERENCES devices(id);

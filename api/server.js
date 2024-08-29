@@ -360,6 +360,54 @@ app.delete('/api/device', async (req, res) => {
   }
 });
 
+
+// =============================
+// login
+// =============================
+
+app.post('/api/login', async (req, res) => {
+  const { id, pw } = req.body;
+  if (!id || !pw) {
+    console.log('Bad Request: Missing required fields');
+    return res.status(400).send('Bad Request: Missing required fields');
+  }
+
+  try {
+    console.log('try login id:', id);
+    // 사용자 정보를 데이터베이스에서 조회
+    const user = await database.getUserById(dbConnection, id);
+    if(user && user.pw === pw) {
+      return res.status(200).json({ success: true, user: { id: user.id, grade: user.grade } });
+    } else {
+      return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    }
+  } catch (error) {
+    console.error('Error logging in:', error);
+    return res.status(500).send('Internal Server Error');
+  }
+});
+
+app.get('/api/users/:id', async (req, res) => {
+  const id = req.params.id;
+  if (!id) {
+    console.log('Bad Request: Missing required fields');
+    return res.status(400).send('Bad Request: Missing required fields');
+  }
+
+  try {
+    // 사용자 정보를 데이터베이스에서 조회
+    const user = await database.getUserById(dbConnection, id);
+    if (user) {
+      return res.status(200).json({ id: user.id, grade: user.grade });
+    } else {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    return res.status(500).send('Internal Server Error');
+  }
+});
+
 // 서버 시작
 app.listen(port, () => {
   console.log(`API 서버가 포트 ${port}에서 실행 중입니다.`);

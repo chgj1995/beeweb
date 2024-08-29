@@ -7,7 +7,12 @@
     "express": "^4.17.1",
     "http-proxy-middleware": "^2.0.0",
     "chart.js": "^3.5.1",
-    "chartjs-adapter-date-fns": "^3.0.0"
+    "chartjs-adapter-date-fns": "^3.0.0",
+    "passport": "^0.6.0",
+    "passport-local": "^1.0.0",
+    "axios": "^1.5.0",
+    "express-session": "^1.17.3",
+    "body-parser": "^1.19.0"
   },
   "scripts": {
     "start": "node server.js"
