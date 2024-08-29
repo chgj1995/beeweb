@@ -490,6 +490,24 @@ const updateDeviceIP = async (connection, data, ip) => {
     }
 };
 
+const getUserById = (connection, id) => {
+    return new Promise((resolve, reject) => {
+        const query = 'SELECT id, pw, grade FROM accounts WHERE id = ?';
+        connection.query(query, [id], (error, results) => {
+            if (error) {
+                console.error('Error fetching user:', error);
+                return reject(error);
+            }
+
+            if (results.length !== 1) {
+                return resolve(null);
+            } else {
+                return resolve(results[0]);
+            }
+        });
+    });
+}
+
 module.exports = {
     createDbConnection,
     checkDevice,
@@ -514,5 +532,7 @@ module.exports = {
     getSensorDataByDeviceAndTimeRange,
     // =====
     insertCameraData,
-    getCameraDataByDeviceAndTimeRange
+    getCameraDataByDeviceAndTimeRange,
+    // =====
+    getUserById
 };

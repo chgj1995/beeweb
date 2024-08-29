@@ -366,21 +366,18 @@ app.delete('/api/device', async (req, res) => {
 // =============================
 
 app.post('/api/login', async (req, res) => {
-  const { username, password } = req.body;
-
-  if (!username || !password) {
+  const { id, pw } = req.body;
+  if (!id || !pw) {
     console.log('Bad Request: Missing required fields');
     return res.status(400).send('Bad Request: Missing required fields');
   }
 
   try {
-    console.log('username:', username);
-    
-    // const user = await database.getUserByUsernameAndPassword(dbConnection, username, password);
-    // if (user) {
-    if (username === 'admin') {
-      const user = { id: username, grade: 1 };
-      return res.status(200).json({ success: true, user });
+    console.log('try login id:', id);
+    // 사용자 정보를 데이터베이스에서 조회
+    const user = await database.getUserById(dbConnection, id);
+    if(user && user.pw === pw) {
+      return res.status(200).json({ success: true, user: { id: user.id, grade: user.grade } });
     } else {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
@@ -391,21 +388,18 @@ app.post('/api/login', async (req, res) => {
 });
 
 app.get('/api/users/:id', async (req, res) => {
-  const userId = req.params.id;
+  const id = req.params.id;
+  if (!id) {
+    console.log('Bad Request: Missing required fields');
+    return res.status(400).send('Bad Request: Missing required fields');
+  }
 
   try {
-    // 여기에 사용자 정보를 데이터베이스에서 조회하는 로직을 추가합니다.
-    console.log('Fetching user with id:', userId);
-    // const user = await database.getUserByUsernameAndPassword(dbConnection, username, password);
-    // if (user) {
-
-    // 예시 사용자 데이터
-    if(userId === 'admin') {
-      const user = { id: userId, grade: 1 };
-      console.log('User found:', user);
-      return res.status(200).json(user);
+    // 사용자 정보를 데이터베이스에서 조회
+    const user = await database.getUserById(dbConnection, id);
+    if (user) {
+      return res.status(200).json({ id: user.id, grade: user.grade });
     } else {
-      console.log('User not found with id:', userId);
       return res.status(404).json({ success: false, message: 'User not found' });
     }
   } catch (error) {

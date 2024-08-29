@@ -4,7 +4,7 @@ const { createProxyMiddleware } = require('http-proxy-middleware');
 const session = require('express-session');
 const passport = require('passport');
 const bodyParser = require('body-parser');
-const loginRouter = require('./login'); // login.js 파일을 불러옴
+const loginRouter = require('./loginRoute'); // loginRoute.js 파일을 불러옴
 
 const app = express();
 const port = 80;
@@ -20,11 +20,16 @@ app.use(express.json()); // JSON 요청 본문 파싱
 
 //============== 세션 및 Passport 설정 ==============
 
+console.log('Session secret:', process.env.SESSION_SECRET);
+
 // 세션 설정
 app.use(session({
-  secret: 'your_secret_key', // 실제 프로젝트에서는 더 강력한 시크릿 키를 사용하세요.
+  secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: true,
+  cookie: {
+    maxAge: 60 * 60 * 1000, // 1 hour in milliseconds
+  }
 }));
 
 // Passport 초기화 및 세션 사용 설정

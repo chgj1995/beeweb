@@ -48,6 +48,8 @@ services:
       dockerfile: Dockerfile
     depends_on:
       - api
+    environment:
+      SESSION_SECRET: ${SESSION_SECRET}
     ports:
       - "80:80"
     restart: always

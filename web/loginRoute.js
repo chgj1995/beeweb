@@ -9,16 +9,18 @@ const router = express.Router();
 const API_BASE_URL = 'http://api:8090/api'; // 이제 프록시된 경로로 접근
 
 // Passport Local Strategy 설정
-passport.use(new LocalStrategy(
-    async (username, password, done) => {
-      console.log('LocalStrategy invoked'); // 이 로그가 출력되는지 확인
+passport.use(new LocalStrategy({
+      usernameField: 'id', // 기본 'username' 필드 대신 'id' 사용
+      passwordField: 'pw'  // 기본 'password' 필드 대신 'pw' 사용
+    },
+    async (id, pw, done) => {
       try {
-        console.log('Attempting to log in with username:', username);
-        const response = await axios.post(`${API_BASE_URL}/login`, { username, password });
-        console.log('login response:', response.data);
+        const response = await axios.post(`${API_BASE_URL}/login`, { id, pw });
         if (response.data.success) {
+          console.log('Login successful:', response.data.user);
           return done(null, response.data.user);
         } else {
+          console.log('Login failed:', response.data.message);
           return done(null, false, { message: 'Invalid credentials' });
         }
       } catch (error) {
@@ -38,8 +40,6 @@ passport.deserializeUser(async (id, done) => {
   try {
     // 세션에서 저장한 id를 사용하여 사용자 정보를 API 서버에서 가져옵니다.
     const response = await axios.get(`${API_BASE_URL}/users/${id}`);
-    console.log('deserializeUser response');
-    console.log(response.data);
     done(null, response.data);
   } catch (error) {
     console.error('Login API error:', error.response ? error.response.data : error.message);
@@ -49,20 +49,19 @@ passport.deserializeUser(async (id, done) => {
 
 // 로그인 페이지 라우트
 router.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+  res.sendFile(path.join(__dirname, 'public', '/account/login.html'));
 });
 
 // 로그인 요청 처리
 router.post('/login', (req, res, next) => {
-    console.log('Attempting to authenticate...');  // 디버그를 위해 추가된 로깅
-    console.log('req.body:', req.body);  // 디버그를 위해 추가된 로깅
     passport.authenticate('local', (err, user, info) => {
       if (err) {
-        console.log('Authentication error:', err);
+        console.log('Authentication error');
         return next(err);
       }
       if (!user) {
-        console.log('Authentication failed:', info.message);
+        console.log(req);
+        console.log('Authentication failed');
         return res.redirect('/honeybee/login');
       }
       req.logIn(user, (err) => {
@@ -70,7 +69,6 @@ router.post('/login', (req, res, next) => {
           console.log('Login error:', err);
           return next(err);
         }
-        console.log('Authentication successful');
         return res.redirect('/honeybee');
       });
     })(req, res, next);
@@ -84,6 +82,15 @@ router.get('/logout', (req, res) => {
     }
     res.redirect('/honeybee/login');
   });
+});
+
+// 사용자 정보 API 추가
+router.get('/user-info', (req, res) => {
+  if (req.isAuthenticated()) {
+    res.json({ userId: req.user.id });
+  } else {
+    res.json({ userId: null });
+  }
 });
 
 module.exports = router;
