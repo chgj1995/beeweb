@@ -44,7 +44,7 @@ if [ $COPY_STATUS -ne 0 ]; then
 fi
 
 # 데이터베이스 삭제 및 재생성
-docker exec $CONTAINER_ID sh -c "mysql -u root -prootpassword -e 'DROP DATABASE IF EXISTS hive_data; CREATE DATABASE hive_data;'"
+docker exec $CONTAINER_ID sh -c "mariadb -u root -prootpassword -e 'DROP DATABASE IF EXISTS hive_data; CREATE DATABASE hive_data;'"
 EXEC_STATUS=$?
 
 # 데이터베이스 삭제 및 재생성이 성공했는지 확인
@@ -55,7 +55,7 @@ if [ $EXEC_STATUS -ne 0 ]; then
 fi
 
 # Docker 컨테이너에서 복원 명령 실행
-docker exec $CONTAINER_ID sh -c "mysql -u root -prootpassword hive_data < /backup/restore_backup.sql"
+docker exec $CONTAINER_ID sh -c "mariadb -u root -prootpassword hive_data < /backup/restore_backup.sql"
 EXEC_STATUS=$?
 
 # 복원이 성공했는지 확인

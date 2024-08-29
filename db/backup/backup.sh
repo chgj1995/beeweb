@@ -41,7 +41,7 @@ fi
 $DOCKER_PATH exec $CONTAINER_ID mkdir -p $CONTAINER_BACKUP_DIR
 
 # Docker 컨테이너에서 백업 명령 실행 및 오류 로그 캡처
-$DOCKER_PATH exec $CONTAINER_ID sh -c "mysqldump --column-statistics=0 -u root -prootpassword hive_data > $BACKUP_FILE" 2> $ERROR_LOG
+$DOCKER_PATH exec $CONTAINER_ID sh -c "mariadb-dump -u root -p'rootpassword' hive_data > $BACKUP_FILE" 2> $ERROR_LOG
 EXEC_STATUS=$?
 
 # 백업이 성공했는지 확인

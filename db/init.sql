@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS accounts (
 );
 
 INSERT INTO accounts (id, pw, grade) VALUES
-    ('admin', '1234', 1)
+    ('admin', 'A6xnQhbz4Vx2HuGl4lXwZ5U2I8iziLRFnhP5eNfIRvQ=', 1)
 ON DUPLICATE KEY UPDATE pw = VALUES(pw), grade = VALUES(grade);
 
 -- 제약조건 및 인덱스 설정
