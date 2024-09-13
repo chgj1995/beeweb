@@ -14,8 +14,6 @@ const API_BASE_URL = 'http://api:8090';
 
 // 프록시 설정
 app.set('trust proxy', true);
-// Body parsing middleware 추가
-app.use(express.json()); // JSON 요청 본문 파싱
 
 //============== API 프록시 설정 (세션 및 Passport 미들웨어 이전) ==============
 
