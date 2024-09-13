@@ -60,7 +60,6 @@ router.post('/login', (req, res, next) => {
         return next(err);
       }
       if (!user) {
-        console.log(req);
         console.log('Authentication failed');
         return res.redirect('/honeybee/login');
       }
