@@ -1,5 +1,4 @@
 const express = require('express');
-const bodyParser = require('body-parser');
 const multer = require('multer');
 const database = require('./db');
 
@@ -23,7 +22,7 @@ const deviceTypes = {
 // DB 연결 설정
 const dbConnection = database.createDbConnection();
 
-app.use(bodyParser.json());
+app.use(express.json());
 
 // =============================
 // AREA & HIVE

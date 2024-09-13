@@ -3,7 +3,6 @@ const path = require('path');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const session = require('express-session');
 const passport = require('passport');
-const bodyParser = require('body-parser');
 const loginRouter = require('./loginRoute'); // loginRoute.js 파일을 불러옴
 
 const app = express();
@@ -15,8 +14,30 @@ const API_BASE_URL = 'http://api:8090';
 
 // 프록시 설정
 app.set('trust proxy', true);
-// Body parsing middleware 추가
-app.use(express.json()); // JSON 요청 본문 파싱
+
+//============== API 프록시 설정 (세션 및 Passport 미들웨어 이전) ==============
+
+// Proxy API requests to the backend API without authentication
+app.use('/honeybee/api', createProxyMiddleware({
+  target: API_BASE_URL,
+  changeOrigin: true,
+  pathRewrite: {
+    '^/honeybee/api': '/api', // '/honeybee/api'를 '/api'로 변경
+  },
+  onProxyReq: (proxyReq, req, res) => {
+    // Add original client IP to X-Forwarded-For header
+    const clientIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress;
+    proxyReq.setHeader('X-Forwarded-For', clientIp);
+    console.log(`Proxied request to ${API_BASE_URL}${req.originalUrl} from ${clientIp}`);
+  },
+  onProxyRes: (proxyRes, req, res) => {
+    console.log(`Received response with status ${proxyRes.statusCode} for ${req.originalUrl}`);
+  },
+  onError: (err, req, res) => {
+    console.error(`Error proxying request to ${API_BASE_URL}${req.originalUrl}:`, err.message);
+    return res.status(500).send('Internal Server Error');
+  }
+}));
 
 //============== 세션 및 Passport 설정 ==============
 
@@ -35,6 +56,11 @@ app.use(session({
 // Passport 초기화 및 세션 사용 설정
 app.use(passport.initialize());
 app.use(passport.session());
+
+//============== Body Parsing 미들웨어 추가 ==============
+
+// Body parsing middleware 추가
+app.use(express.json()); // JSON 요청 본문 파싱
 
 //============== 정적 파일 서빙 ==============
 
@@ -81,26 +107,6 @@ honeybeeRouter.get('/test', ensureAuthenticated, (req, res) => {
 
 // 로그인 라우터 추가
 honeybeeRouter.use('/', loginRouter);
-
-//============== API 프록시 설정 ==============
-
-// Proxy API requests to the backend API
-honeybeeRouter.use('/api', createProxyMiddleware({
-  target: API_BASE_URL,
-  changeOrigin: true,
-  pathRewrite: {
-    '^/honeybee/api': 'api', // '/honeybee/api'를 '/api'로 변경
-  },
-  onProxyReq: (proxyReq, req, res) => {
-    // Add original client IP to X-Forwarded-For header
-    const clientIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress;
-    proxyReq.setHeader('X-Forwarded-For', clientIp);
-  },
-  onError: (err, req, res) => {
-    console.error(`Error proxying request to ${API_BASE_URL}${req.originalUrl}:`, err.message);
-    return res.status(500).send('Internal Server Error');
-  }
-}));
 
 // Use /honeybee as the base path for the honeybeeRouter
 app.use('/honeybee', honeybeeRouter);
