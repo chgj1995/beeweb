@@ -28,11 +28,11 @@ app.use('/honeybee/api', createProxyMiddleware({
     // Add original client IP to X-Forwarded-For header
     const clientIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress;
     proxyReq.setHeader('X-Forwarded-For', clientIp);
-    console.log(`Proxied request to ${API_BASE_URL}${req.originalUrl} from ${clientIp}`);
+    // console.log(`Proxied request to ${API_BASE_URL}${req.originalUrl} from ${clientIp}`);
   },
-  onProxyRes: (proxyRes, req, res) => {
-    console.log(`Received response with status ${proxyRes.statusCode} for ${req.originalUrl}`);
-  },
+  // onProxyRes: (proxyRes, req, res) => {
+  //   console.log(`Received response with status ${proxyRes.statusCode} for ${req.originalUrl}`);
+  // },
   onError: (err, req, res) => {
     console.error(`Error proxying request to ${API_BASE_URL}${req.originalUrl}:`, err.message);
     return res.status(500).send('Internal Server Error');
