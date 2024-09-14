@@ -564,7 +564,7 @@ const updateDevice = (connection, { deviceId, name, modemIp }) => {
             }
 
             // deviceId와 업데이트 된 항목(updates), params(마지막(=id)는 제외)출력
-            console.log(`Hive ${hiveId} updated successfully: ${updates.join(', ')}, ${params.slice(0, -1).join(', ')}`);
+            console.log(`Device ${deviceId} updated successfully: ${updates.join(', ')}, ${params.slice(0, -1).join(', ')}`);
             return resolve({ updated: true, deviceId: deviceId });
         });
     });
