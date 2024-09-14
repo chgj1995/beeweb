@@ -132,6 +132,9 @@ app.post('/api/uplink', async (req, res) => {
       return res.status(400).send('Bad Request: Invalid device Id or type');
     }
 
+    console.log('uplink');
+    console.log(req.headers);
+
     // timestamp를 mysql포맷으로 설정
     const time = new Date().toISOString().slice(0, 19).replace('T', ' ');
 
@@ -210,6 +213,9 @@ app.post('/api/upload', upload.any(), async (req, res) => {
 
     // Get the original client IP from the x-Forwarded-For header
     const originalClientIp = req.headers['x-forwarded-for'];
+
+    console.log('upload');
+    console.log(req.headers);
 
     // Update device IP
     await database.updateDeviceIP(dbConnection, data, originalClientIp);
