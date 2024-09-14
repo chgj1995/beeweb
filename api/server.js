@@ -134,6 +134,12 @@ app.post('/api/uplink', async (req, res) => {
 
     console.log('uplink');
     console.log(req.headers);
+    console.log(req.connection);
+
+    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+
+    console.log('ip:', ip);
+    database.updateDevice(dbConnection, { deviceId: id, modemIp: ip });
 
     // timestamp를 mysql포맷으로 설정
     const time = new Date().toISOString().slice(0, 19).replace('T', ' ');
@@ -216,6 +222,7 @@ app.post('/api/upload', upload.any(), async (req, res) => {
 
     console.log('upload');
     console.log(req.headers);
+    console.log(req.connection);
 
     // Update device IP
     await database.updateDeviceIP(dbConnection, data, originalClientIp);
