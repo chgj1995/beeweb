@@ -212,11 +212,13 @@ app.post('/api/upload', upload.any(), async (req, res) => {
       }
     });
 
-    // IP 업데이트
+    // IP 획득
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    data.forEach(element => {
-      const id = element.id;
-      database.updateDevice(dbConnection, { deviceId: id, modemIp: ip });
+    // data에서 id가 unique한 element들만 찾아서 id를획득
+    const uniqueIds = [...new Set(data.map(item => item.id))];
+    // IP 업데이트
+    uniqueIds.forEach(async id => {
+      await database.updateDevice(dbConnection, { deviceId: id, modemIp: ip });
     });
 
     // Handle different types of data

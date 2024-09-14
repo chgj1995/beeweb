@@ -407,8 +407,8 @@ const updateHive = (connection, { hiveId, areaId, name}) => {
                 return resolve({ updated: false, hiveId: hiveId });
             }
 
-            // hiveId와 업데이트 된 항목(updates), params출력
-            console.log(`Hive ${hiveId} updated successfully: ${updates.join(', ')}, ${params.join(', ')}`);
+            // hiveId와 업데이트 된 항목(updates), params(마지막()=id)는 제외)출력
+            console.log(`Hive ${hiveId} updated successfully: ${updates.join(', ')}, ${params.slice(0, -1).join(', ')}`);
             return resolve({ updated: true, hiveId: hiveId });
         });
     });
@@ -563,8 +563,8 @@ const updateDevice = (connection, { deviceId, name, modemIp }) => {
                 return resolve({ updated: false, deviceId: deviceId });
             }
 
-            // deviceId와 업데이트 된 항목(updates), params출력
-            console.log(`Device ${deviceId} updated successfully: ${updates.join(', ')}, ${params.join(', ')}`);
+            // deviceId와 업데이트 된 항목(updates), params(마지막(=id)는 제외)출력
+            console.log(`Hive ${hiveId} updated successfully: ${updates.join(', ')}, ${params.slice(0, -1).join(', ')}`);
             return resolve({ updated: true, deviceId: deviceId });
         });
     });
