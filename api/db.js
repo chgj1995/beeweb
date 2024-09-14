@@ -407,7 +407,8 @@ const updateHive = (connection, { hiveId, areaId, name}) => {
                 return resolve({ updated: false, hiveId: hiveId });
             }
 
-            console.log(`Hive ${hiveId} updated successfully`);
+            // hiveId와 업데이트 된 항목(updates), params출력
+            console.log(`Hive ${hiveId} updated successfully: ${updates.join(', ')}, ${params.join(', ')}`);
             return resolve({ updated: true, hiveId: hiveId });
         });
     });
@@ -562,7 +563,8 @@ const updateDevice = (connection, { deviceId, name, modemIp }) => {
                 return resolve({ updated: false, deviceId: deviceId });
             }
 
-            console.log(`Device ${deviceId} updated successfully`);
+            // deviceId와 업데이트 된 항목(updates), params출력
+            console.log(`Device ${deviceId} updated successfully: ${updates.join(', ')}, ${params.join(', ')}`);
             return resolve({ updated: true, deviceId: deviceId });
         });
     });
