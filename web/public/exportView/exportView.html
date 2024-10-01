@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>HIVE 데이터 내보내기</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 타이틀을 주황색 헤더로 두름 -->
+        <div class="header">
+            <h2>HIVE 데이터 출력</h2>
+        </div>
+
+        <!-- 검색 및 저장 영역 -->
+        <div class="search-save-container">
+            <!-- 검색 영역 -->
+            <div class="search-container">
+                <select id="searchDropdown">
+                    <option value="id">HIVE ID</option>
+                    <option value="name">HIVE 이름</option>
+                    <option value="region">지역 이름</option>
+                </select>
+                <input type="text" id="searchQuery" placeholder="검색어 입력">
+                <button id="searchBtn">검색</button>
+            </div>
+
+            <!-- 저장 버튼 -->
+            <div class="action-buttons">
+                <button id="saveBtn">저장</button>
+            </div>
+        </div>
+
+        <!-- 테이블 영역 -->
+        <table id="hiveTable">
+            <thead>
+                <tr>
+                    <th class="selectColumn"><input type="checkbox" id="selectAll" onclick="toggleSelectAll()"> 전체 선택</th>
+                    <th>HIVE ID</th>
+                    <th>HIVE 이름</th>
+                    <th>지역 이름</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- 실제 데이터는 JavaScript를 통해 동적으로 삽입 -->
+                <!-- 예시 데이터 -->
+                <tr>
+                    <td><input type="checkbox" class="selectItem"></td>
+                    <td>1</td>
+                    <td>Hive A</td>
+                    <td>인천대</td>
+                </tr>
+                <tr>
+                    <td><input type="checkbox" class="selectItem"></td>
+                    <td>2</td>
+                    <td>Hive B</td>
+                    <td>안동대</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script src="exportView/scripts/hive_list_export.js"></script>
+</body>
+</html>
