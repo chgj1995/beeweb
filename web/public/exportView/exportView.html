@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <title>HIVE 데이터 내보내기</title>
     <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+
 </head>
 <body>
     <div class="container">
@@ -29,6 +31,15 @@
             <div class="action-buttons">
                 <button id="saveBtn">저장</button>
             </div>
+        </div>
+
+        <!-- time-selector -->
+        <div class="time-selector">
+            <button onclick="setPreset('day')">1일</button>
+            <button onclick="setPreset('week')">1주</button>
+            <button onclick="setPreset('month')">1달</button>
+            시작: <input type="datetime-local" id="startDate">
+            종료: <input type="datetime-local" id="endDate">
         </div>
 
         <!-- 테이블 영역 -->
@@ -60,6 +71,8 @@
         </table>
     </div>
 
-    <script src="exportView/scripts/hive_list_export.js"></script>
+    <script src="scripts/timeSelector.js"></script>
+    <script src="scripts/hive_list.js"></script>
+    <script src="scripts/export.js"></script>
 </body>
 </html>

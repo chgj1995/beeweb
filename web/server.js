@@ -95,6 +95,11 @@ honeybeeRouter.get('/compareView', ensureAuthenticated, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'compareView/compareView.html'));
 });
 
+// exportView 라우트 추가
+honeybeeRouter.get('/exportView', ensureAuthenticated, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'exportView/exportView.html'));
+});
+
 // Route to serve the index page
 honeybeeRouter.get('/', ensureAuthenticated, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
