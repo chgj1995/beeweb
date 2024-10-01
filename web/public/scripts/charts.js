@@ -1,3 +1,4 @@
+// TODO: API콜로 TYPE 받아오도록 수정
 const deviceTypes = {
   'CAMERA': 1,
   'SENSOR': 2,

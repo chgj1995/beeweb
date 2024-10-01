@@ -1,0 +1,75 @@
+<!-- public/device_list.html -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>DEVICE 관리</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="nav-back">
+                <a id="back-link" href="area_list.html" class="back-link">이전</a>
+            </div>
+            <h2 id="deviceListTitle">DEVICE 관리</h2>
+        </div>
+
+        <!-- 검색 영역 -->
+        <div class="search-container">
+            <select id="searchDropdown">
+                <option value="id">디바이스 ID</option>
+                <option value="name">디바이스 이름</option>
+                <option value="type">디바이스 타입</option>
+                <option value="modem_ip">모뎀 IP</option>
+            </select>
+            <input type="text" id="searchQuery" placeholder="검색어 입력">
+            <button id="searchBtn">검색</button>
+        </div>
+
+        <button id="addDeviceButton">DEVICE 추가</button>
+        <table id="deviceTable">
+            <thead>
+                <tr>
+                    <th>디바이스 ID</th>
+                    <th>디바이스 이름</th>
+                    <th>타입</th>
+                    <th>모뎀 IP</th>
+                    <th>작업</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- 실제 데이터는 JavaScript를 통해 동적으로 삽입 -->
+                <!-- 예시 데이터 -->
+                <tr>
+                    <td>1</td>
+                    <td>Example 1</td>
+                    <td>CAMERA</td>
+                    <td>192.168.1.1</td>
+                    <td class="actions">
+                        <button onclick="window.location.href='device_add.html?device_id=1&hive_id=1'">수정</button>
+                        <button class="delete" onclick="prepareDelete('device', 1)">삭제</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>Example 2</td>
+                    <td>SENSOR</td>
+                    <td>192.168.1.2</td>
+                    <td class="actions">
+                        <button onclick="window.location.href='device_add.html?device_id=2&hive_id=1'">수정</button>
+                        <button class="delete" onclick="prepareDelete('device', 2)">삭제</button>
+                    </td>
+                </tr>
+                <!-- 실제 데이터는 API를 통해 동적으로 삽입 -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 모달 로드 -->
+    <div id="modal"></div>
+
+    <script src="scripts/modal.js"></script>
+    <script src="scripts/device_list.js"></script>
+</body>
+</html>

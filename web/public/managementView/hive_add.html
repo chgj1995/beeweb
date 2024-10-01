@@ -1,0 +1,38 @@
+<!-- public/hive_add.html -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>HIVE 추가</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h2 id="hiveAddTitle" >HIVE 추가</h2>
+        </div>
+        
+        <form id="hiveAddForm">
+            <label for="hiveName">HIVE 이름:</label><br>
+            <input type="text" id="hiveName" name="hiveName" required><br><br>
+            <label for="areaSelect">지역 선택:</label><br>
+            <select id="areaSelect" name="areaSelect" required>
+                <option value="">지역을 선택하세요</option>
+                <!-- 지역 목록은 API를 통해 동적으로 로드할 수 있습니다 -->
+                <option value="1">인천대</option>
+                <option value="2">안동대</option>
+                <option value="3">농과원</option>
+            </select><br><br>
+            <button type="submit">저장</button>
+            <button type="button" id="cancelButton">취소</button>
+        </form>
+    </div>
+
+    <!-- 모달 로드 -->
+    <div id="modal"></div>
+
+    <script src="scripts/modal.js"></script>
+    <script src="scripts/hive_add.js"></script>
+</body>
+</html>

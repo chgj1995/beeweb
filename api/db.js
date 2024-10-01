@@ -26,6 +26,23 @@ const createDbConnection = () => {
 };
 
 // =============================
+// TYPE
+// =============================
+const getDeviceTypes = (connection) => {
+    return new Promise((resolve, reject) => {
+        const query = 'SELECT id, name FROM device_types';
+        connection.query(query, (error, results) => {
+            if (error) {
+                console.error('Error fetching device_types:', error);
+                return reject(error);
+            }
+            console.log(`Fetched ${results.length} device_types`);
+            return resolve(results);
+        });
+    });
+};
+
+// =============================
 // AREA & HIVE
 // =============================
 const getAreasAndHives = (connection) => {
@@ -71,11 +88,6 @@ const getAreasAndHives = (connection) => {
         });
     });
 };
-
-// =============================
-// DEVICES
-// =============================
-
 
 // =============================
 // DATA
@@ -289,6 +301,157 @@ const insertCameraData = async (connection, data) => {
 
     console.log(`Finished inserting/updating a total of ${totalProcessedCount} rows of camera data`);
 };
+
+// =============================
+// AREA
+// =============================
+// getAreas
+const getAreas = (connection) => {
+    return new Promise((resolve, reject) => {
+        const query = 'SELECT id, name, location FROM areas';
+        connection.query(query, (error, results) => {
+            if (error) {
+                console.error('Error fetching areas:', error);
+                return reject(error);
+            }
+            console.log(`Fetched ${results.length} areas`);
+            return resolve(results);
+        });
+    });
+};
+
+// getAreasByAreaId
+const getAreaByAreaId = (connection, areaIds) => {
+    return new Promise((resolve, reject) => {
+        // areaIds가 배열이 아닌 경우 배열로 변환
+        if (!Array.isArray(areaIds)) {
+            areaIds = [areaIds];
+        }
+
+        // 쿼리 문자열과 파라미터 배열 생성
+        const query = `SELECT id, name, location FROM areas WHERE id IN (${areaIds.map(() => '?').join(',')})`;
+        const params = areaIds;
+
+        connection.query(query, params, (error, results) => {
+            if (error) {
+                console.error('Error fetching areas by areaIds:', error);
+                return reject(error);
+            }
+            console.log(`Fetched ${results.length} areas for areaIds ${areaIds}`);
+            return resolve(results);
+        });
+    });
+};
+
+
+// addArea
+const addArea = (connection, name, location) => {
+    // location 값이 없거나 위도, 경도 형태가 아니면
+    if (!location || !location.trim().match(/^\d+\.\d+,\s*\d+\.\d+$/)) {
+        location = '0.0, 0.0';
+    }
+
+    return new Promise((resolve, reject) => {
+        // 먼저 중복 체크
+        const checkQuery = 'SELECT id FROM areas WHERE name = ?';
+        connection.query(checkQuery, [name], (checkError, checkResults) => {
+            if (checkError) {
+                console.error('Error checking area:', checkError);
+                return reject(checkError);
+            }
+            if (checkResults.length > 0) {
+                // 이미 존재하는 경우
+                console.log(`Area already exists: ${checkResults[0].id} (name: ${name})`);
+                return resolve({ existing: true, areaId: checkResults[0].id });
+            } else {
+                // 존재하지 않으면 새로 삽입
+                const insertQuery = 'INSERT INTO areas (name, location) VALUES (?, ?)';
+                connection.query(insertQuery, [name, location], (insertError, insertResults) => {
+                    if (insertError) {
+                        console.error('Error adding area:', insertError);
+                        return reject(insertError);
+                    }
+                    console.log(`Inserted area: ${insertResults.insertId} (name: ${name})`);
+                    return resolve({ existing: false, areaId: insertResults.insertId });
+                });
+            }
+        });
+    });
+}
+
+// updateArea
+const updateArea = (connection, { areaId, name, location }) => {
+    return new Promise((resolve, reject) => {
+        // areaId가 없으면 업데이트를 할 수 없으므로 오류 처리
+        if (!areaId) {
+            return reject(new Error('areaId is required'));
+        }
+
+        // 업데이트할 항목들을 저장할 배열
+        let updates = [];
+        let params = [];
+
+        // name이 존재하면 업데이트 배열에 추가
+        if (name !== undefined) {
+            updates.push('name = ?');
+            params.push(name);
+        }
+
+        // location 경도값이 존재하고 위도 경도 형태인 경우
+        if (location !== undefined && location.trim().match(/^\d+\.\d+,\s*\d+\.\d+$/)) {
+            updates.push('location = ?');
+            params.push(location);
+        }
+
+        // 업데이트할 항목이 없다면 아무 것도 하지 않음
+        if (updates.length === 0) {
+            return resolve({ updated: false, areaId: areaId });
+        }
+
+        // areaId는 반드시 마지막에 추가 (WHERE 절)
+        params.push(areaId);
+
+        // 동적으로 쿼리 생성
+        const query = `UPDATE areas SET ${updates.join(', ')} WHERE id = ?`;
+
+        // 쿼리 실행
+        connection.query(query, params, (error, result) => {
+            if (error) {
+                console.error('Error updating area:', error);
+                return reject(error);
+            }
+
+            if(result.affectedRows === 0) {
+                console.log(`Area not found: ${areaId}`);
+                return resolve({ updated: false, areaId: areaId });
+            }
+
+            // areaId와 업데이트 된 항목(updates), params(마지막(=id)는 제외)출력
+            console.log(`Area ${areaId} updated successfully: ${updates.join(', ')}, ${params.slice(0, -1).join(', ')}`);
+            return resolve({ updated: true, areaId: areaId });
+        });
+    });
+};
+
+// deleteArea
+const deleteArea = (connection, areaId) => {
+    return new Promise((resolve, reject) => {
+        const query = 'DELETE FROM areas WHERE id = ?';
+        connection.query(query, [areaId], (error, results) => {
+            if (error) {
+                console.error('Error deleting area:', error);
+                return reject(error);
+            }
+            if(results.affectedRows === 0) {
+                console.log(`Area not found: ${areaId}`);
+                return resolve({ deleted: false, areaId: areaId });
+            }
+            console.log(`Deleted area: ${areaId}`);
+            return resolve({ deleted: true, areaId: areaId });
+        });
+    });
+};
+
 
 // =============================
 // HIVE
@@ -645,6 +808,15 @@ module.exports = {
 
     // =====
     getAreasAndHives,
+
+    // =====
+    getDeviceTypes,
+    // =====
+    getAreas,
+    getAreaByAreaId,
+    addArea,
+    updateArea,
+    deleteArea,
     // =====
     getHivesByAreaId,
     getHiveByHiveId,

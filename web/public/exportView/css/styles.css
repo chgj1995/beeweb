@@ -95,3 +95,18 @@ th.selectColumn {
 .time-selector button {
     margin: 0 0.5rem;
 }
+
+.nav-back {
+    margin-bottom: 10px; /* 타이틀과의 간격 */
+}
+
+.back-link {
+    font-size: 14px;
+    color: blue;
+    text-decoration: none;
+}
+
+.back-link:hover {
+    text-decoration: underline;
+    color: #e07b00;
+}

@@ -8,17 +8,6 @@ const port = 8090;
 // Multer 설정
 const upload = multer(); // Multer 설정
 
-// TODO: 타입 위치 관련
-// DB에서 조회하던지,
-// 선언으로만 쓰던지 하나만 하는게 좋음
-// 변동성 별로 없을 것 같아서 선언으로 해도 괜찮을 것 같긴함
-// DB에서 조회한다면 어떤 타이밍에 조회할지가 또 생각해볼 문제
-const deviceTypes = {
-  'CAMERA': 1,
-  'SENSOR': 2,
-  'INOUT': 3,
-};
-
 // DB 연결 설정
 const dbConnection = database.createDbConnection();
 
@@ -33,6 +22,19 @@ app.get('/api/areahive', async (req, res) => {
     res.json(data);
   } catch (error) {
     console.error('Error fetching areas and hives:', error);
+    return res.status(500).send('Internal Server Error');
+  }
+});
+
+// =============================
+// DEVICE TYPES
+// =============================
+app.get('/api/devicetypes', async (req, res) => {
+  try {
+    const data = await database.getDeviceTypes(dbConnection);
+    res.json(data);
+  } catch (error) {
+    console.error('Error fetching device types:', error);
     return res.status(500).send('Internal Server Error');
   }
 });
@@ -139,21 +141,26 @@ app.post('/api/uplink', async (req, res) => {
     // timestamp를 mysql포맷으로 설정
     const time = new Date().toISOString().slice(0, 19).replace('T', ' ');
 
+    // type 획득
+    const types = await database.getDeviceTypes(dbConnection);
+    typeName = types.find(item => item.id === type).name;
     // 각 Type에 맞게 데이터 삽입
-    if (type === deviceTypes.INOUT) {
+    if(typeName === 'INOUT') {
       const {inField, outField } = req.body;
       if (inField == null || outField == null) {
         return res.status(400).send('Bad Request: Missing required fields');
       }
       await handleInOutData(dbConnection, [{ id, time, inField, outField }]);
       return res.status(201).send('Data inserted successfully');
-    } else if (type === deviceTypes.SENSOR) {
+    } else if(typeName === 'SENSOR') {
       const { temp, humi, co2, weigh } = req.body;
       if (temp == null && humi == null && co2 == null && weigh == null) {
         return res.status(400).send('Bad Request: Missing required fields');
       }
       await handleSensorData(dbConnection, [{ id, time, temp, humi, co2, weigh }]);
       return res.status(201).send('Data inserted successfully');
+    } else if(typeName === 'CAMERA') {
+      console.log('CAMERA');
     } else {
       return res.status(400).send('Bad Request: Invalid device type');
     }
@@ -221,16 +228,20 @@ app.post('/api/upload', upload.any(), async (req, res) => {
       await database.updateDevice(dbConnection, { deviceId: id, modemIp: ip });
     });
 
-    // Handle different types of data
-    if (type == deviceTypes.INOUT) {
+    // type 획득
+    const types = await database.getDeviceTypes(dbConnection);
+    typeName = types.find(item => item.id === type).name;
+    // 각 Type에 맞게 데이터 삽입
+    if(typeName === 'INOUT') {
       await handleInOutData(dbConnection, data);
-    } else if (type == deviceTypes.SENSOR) {
+    } else if(typeName === 'SENSOR') {
       await handleSensorData(dbConnection, data);
-    } else if (type == deviceTypes.CAMERA) {
+    } else if(typeName === 'CAMERA') {
       await handleCameraData(dbConnection, data);
     } else {
       return res.status(400).send('Bad Request: Invalid device type');
     }
+
     return res.status(201).send('Data inserted successfully');
   } catch (error) {
     console.error('Error processing upload:', error);
@@ -242,6 +253,84 @@ app.listen(3000, () => {
   console.log('Backend server is running on port 3000');
 });
 
+// =============================
+// AREA
+// =============================
+app.get('/api/area', async (req, res) => {
+  const { areaId } = req.query;
+  try {
+    // areaId가 있으면 해당 areaId로 검색
+    if (areaId) {
+      const areas = await database.getAreaByAreaId(dbConnection, areaId.split(','));
+      return res.json(areas);
+    } else { // areaId가 없으면 전체 검색
+      const areas = await database.getAreas(dbConnection);
+      return res.json(areas);
+    }
+  } catch (error) {
+    console.error('Error fetching areas:', error);
+    return res.status(500).send('Internal Server Error');
+  }
+});
+
+app.post('/api/area', async (req, res) => {
+  const { name, location } = req.body;
+  if (!name) {
+    return res.status(400).send('Bad Request: Missing required fields');
+  }
+
+  try {
+    const result = await database.addArea(dbConnection, name, location);
+    if(result.existing) {
+      return res.status(409).json({message: 'Area already exists', areaId: result.areaId});
+    } else {
+      return res.status(201).json({message: 'Area added successfully', areaId: result.areaId});
+    }
+  } catch (error) {
+    console.error('Error adding area:', error);
+    return res.status(500).send('Internal Server Error');
+  }
+});
+
+app.put('/api/area', async (req, res) => {
+  const { areaId, name, location } = req.body;
+
+  if (!areaId) {
+    return res.status(400).send('Bad Request: Missing areaId');
+  }
+
+  try {
+    const result = await database.updateArea(dbConnection, { areaId, name, location });
+    if(result.updated) {
+      return res.status(200).json({message: 'Area updated successfully', areaId: result.areaId});
+    } else {
+      return res.status(404).json({message: 'Area not found', areaId: result.areaId});
+    }
+  } catch (error) {
+    console.error('Error updating area:', error);
+    return res.status(500).send('Internal Server Error');
+  }
+});
+
+app.delete('/api/area', async (req, res) => {
+  const { areaId } = req.query;
+
+  if (!areaId) {
+    return res.status(400).send('Bad Request: Missing areaId');
+  }
+
+  try {
+    const result = await database.deleteArea(dbConnection, areaId);
+    if(result.deleted) {
+      return res.status(200).json({message: 'Area deleted successfully', areaId: result.areaId});
+    } else {
+      return res.status(404).json({message: 'Area not found', areaId: result.areaId});
+    }
+  } catch (error) {
+    console.error('Error deleting area:', error);
+    return res.status(500).send('Internal Server Error');
+  }
+});
 
 // =============================
 // HIVE
