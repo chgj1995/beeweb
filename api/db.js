@@ -307,6 +307,31 @@ const getHivesByAreaId = (connection, areaId) => {
     });
 };
 
+// Hive 목록을 hiveId로 조회하는 함수
+const getHiveByHiveId = (connection, hiveIds) => {
+    return new Promise((resolve, reject) => {
+        
+        // hiveIds가 배열이 아닌 경우 배열로 변환
+        if (!Array.isArray(hiveIds)) {
+            hiveIds = [hiveIds];
+        }
+
+        // 쿼리 문자열과 파라미터 배열 생성
+        const query = `SELECT id, name, area_id FROM hives WHERE id IN (${hiveIds.map(() => '?').join(',')})`;
+        const params = hiveIds;
+
+        connection.query(query, params, (error, results) => {
+            if (error) {
+                console.error('Error fetching hives by hiveIds:', error);
+                return reject(error);
+            }
+            console.log(`Fetched ${results.length} hives for hiveIds ${hiveIds}`);
+            return resolve(results);
+        });
+    });
+};
+
+
 const addHive = (connection, areaId, name) => {
     return new Promise((resolve, reject) => {
         // 먼저 중복 체크
@@ -336,6 +361,59 @@ const addHive = (connection, areaId, name) => {
     });
 };
 
+const updateHive = (connection, { hiveId, areaId, name}) => {
+    return new Promise((resolve, reject) => {
+        // hiveId가 없으면 업데이트를 할 수 없으므로 오류 처리
+        if (!hiveId) {
+            return reject(new Error('hiveId is required'));
+        }
+
+        // 업데이트할 항목들을 저장할 배열
+        let updates = [];
+        let params = [];
+
+        // name이 존재하면 업데이트 배열에 추가
+        if (name !== undefined) {
+            updates.push('name = ?');
+            params.push(name);
+        }
+
+        // areaId가 존재하면 업데이트 배열에 추가
+        if (areaId !== undefined) {
+            updates.push('area_id = ?');
+            params.push(areaId);
+        }
+
+        // 업데이트할 항목이 없다면 아무 것도 하지 않음
+        if (updates.length === 0) {
+            return resolve({ updated: false, hiveId: hiveId });
+        }
+
+        // hiveId는 반드시 마지막에 추가 (WHERE 절)
+        params.push(hiveId);
+
+        // 동적으로 쿼리 생성
+        const query = `UPDATE hives SET ${updates.join(', ')} WHERE id = ?`;
+
+        // 쿼리 실행
+        connection.query(query, params, (error, result) => {
+            if (error) {
+                console.error('Error updating hive:', error);
+                return reject(error);
+            }
+
+            if(result.affectedRows === 0) {
+                console.log(`Hive not found: ${hiveId}`);
+                return resolve({ updated: false, hiveId: hiveId });
+            }
+
+            // hiveId와 업데이트 된 항목(updates), params(마지막()=id)는 제외)출력
+            console.log(`Hive ${hiveId} updated successfully: ${updates.join(', ')}, ${params.slice(0, -1).join(', ')}`);
+            return resolve({ updated: true, hiveId: hiveId });
+        });
+    });
+};
+
 const deleteHive = (connection, hiveId) => {
     return new Promise((resolve, reject) => {
         const query = 'DELETE FROM hives WHERE id = ?';
@@ -361,7 +439,7 @@ const deleteHive = (connection, hiveId) => {
 // Device 목록을 조회하는 함수
 const getDevicesByHiveId = (connection, hiveId) => {
     return new Promise((resolve, reject) => {
-        const query = 'SELECT id, name, type_id FROM devices WHERE hive_id = ?';
+        const query = 'SELECT id, name, type_id, modem_ip FROM devices WHERE hive_id = ?';
         connection.query(query, [hiveId], (error, results) => {
             if (error) {
                 console.error('Error fetching devices:', error);
@@ -382,7 +460,7 @@ const getDeviceByDeviceId = (connection, deviceIds) => {
         }
 
         // 쿼리 문자열과 파라미터 배열 생성
-        const query = `SELECT id, name, hive_id, type_id FROM devices WHERE id IN (${deviceIds.map(() => '?').join(',')})`;
+        const query = `SELECT id, name, hive_id, type_id, modem_ip FROM devices WHERE id IN (${deviceIds.map(() => '?').join(',')})`;
         const params = deviceIds;
         connection.query(query, params, (error, results) => {
             if (error) {
@@ -394,7 +472,6 @@ const getDeviceByDeviceId = (connection, deviceIds) => {
         });
     });
 };
-
 
 // 해당 type의 장치 id가 있는지 확인
 const checkDevice = (connection, id, type) => {
@@ -436,6 +513,59 @@ const addDevice = (connection, name, hiveId, typeId) => {
                     return resolve({ existing: false, deviceId: insertResults.insertId });
                 });
             }
+        });
+    });
+};
+
+const updateDevice = (connection, { deviceId, name, modemIp }) => {
+    return new Promise((resolve, reject) => {
+        // deviceId가 없으면 업데이트를 할 수 없으므로 오류 처리
+        if (!deviceId) {
+            return reject(new Error('deviceId is required'));
+        }
+
+        // 업데이트할 항목들을 저장할 배열
+        let updates = [];
+        let params = [];
+
+        // name이 존재하면 업데이트 배열에 추가
+        if (name !== undefined) {
+            updates.push('name = ?');
+            params.push(name);
+        }
+
+        // modemIp가 존재하면 업데이트 배열에 추가
+        if (modemIp !== undefined) {
+            updates.push('modem_ip = ?');
+            params.push(modemIp);
+        }
+
+        // 업데이트할 항목이 없다면 아무 것도 하지 않음
+        if (updates.length === 0) {
+            return resolve({ updated: false, deviceId: deviceId });
+        }
+
+        // deviceId는 반드시 마지막에 추가 (WHERE 절)
+        params.push(deviceId);
+
+        // 동적으로 쿼리 생성
+        const query = `UPDATE devices SET ${updates.join(', ')} WHERE id = ?`;
+
+        // 쿼리 실행
+        connection.query(query, params, (error, result) => {
+            if (error) {
+                console.error('Error updating device:', error);
+                return reject(error);
+            }
+
+            if(result.affectedRows === 0) {
+                console.log(`Device not found: ${deviceId}`);
+                return resolve({ updated: false, deviceId: deviceId });
+            }
+
+            // deviceId와 업데이트 된 항목(updates), params(마지막(=id)는 제외)출력
+            console.log(`Device ${deviceId} updated successfully: ${updates.join(', ')}, ${params.slice(0, -1).join(', ')}`);
+            return resolve({ updated: true, deviceId: deviceId });
         });
     });
 };
@@ -517,12 +647,15 @@ module.exports = {
     getAreasAndHives,
     // =====
     getHivesByAreaId,
+    getHiveByHiveId,
     addHive,
+    updateHive,
     deleteHive,
     // =====
     getDevicesByHiveId,
     getDeviceByDeviceId,
     addDevice,
+    updateDevice,
     deleteDevice,
     // =====
     insertInOutData,

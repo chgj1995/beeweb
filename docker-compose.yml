@@ -52,6 +52,9 @@ services:
       SESSION_SECRET: ${SESSION_SECRET}
     ports:
       - "80:80"
+    volumes:
+      - ./web:/usr/src/app   # 로컬 경로를 컨테이너 경로로 마운트
+      - /usr/src/app/node_modules   # node_modules는 컨테이너 내부에만 존재하게 함
     restart: always
 
 volumes:

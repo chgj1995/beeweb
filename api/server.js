@@ -132,6 +132,10 @@ app.post('/api/uplink', async (req, res) => {
       return res.status(400).send('Bad Request: Invalid device Id or type');
     }
 
+    // IP 업데이트
+    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    await database.updateDevice(dbConnection, { deviceId: id, modemIp: ip });
+
     // timestamp를 mysql포맷으로 설정
     const time = new Date().toISOString().slice(0, 19).replace('T', ' ');
 
@@ -208,11 +212,14 @@ app.post('/api/upload', upload.any(), async (req, res) => {
       }
     });
 
-    // Get the original client IP from the x-Forwarded-For header
-    const originalClientIp = req.headers['x-forwarded-for'];
-
-    // Update device IP
-    await database.updateDeviceIP(dbConnection, data, originalClientIp);
+    // IP 획득
+    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    // data에서 id가 unique한 element들만 찾아서 id를획득
+    const uniqueIds = [...new Set(data.map(item => item.id))];
+    // IP 업데이트
+    uniqueIds.forEach(async id => {
+      await database.updateDevice(dbConnection, { deviceId: id, modemIp: ip });
+    });
 
     // Handle different types of data
     if (type == deviceTypes.INOUT) {
@@ -240,14 +247,24 @@ app.listen(3000, () => {
 // HIVE
 // =============================
 app.get('/api/hive', async (req, res) => {
-  const { areaId } = req.query;
+  const { areaId, hiveId } = req.query;
 
-  if (!areaId) {
-    return res.status(400).send('Bad Request: Missing areaId');
+  // areaId와 hiveId가 모두 없을 때 에러 처리
+  if (!areaId && !hiveId) {
+    return res.status(400).send('Bad Request: Missing areaId or hiveId');
   }
 
   try {
-    const hives = await database.getHivesByAreaId(dbConnection, areaId);
+    let hives;
+
+    // hiveId가 있으면 해당 hiveId로 검색
+    if (hiveId) {
+      hives = await database.getHiveByHiveId(dbConnection, hiveId.split(','));
+    } else {
+      // hiveId가 없으면 areaId로 검색
+      hives = await database.getHivesByAreaId(dbConnection, areaId);
+    }
+
     return res.status(200).json(hives);
   } catch (error) {
     console.error('Error fetching hives:', error);
@@ -271,6 +288,27 @@ app.post('/api/hive', async (req, res) => {
     }
   } catch (error) {
     console.error('Error adding hive:', error);
+    return res.status(500).send('Internal Server Error');
+  }
+});
+
+app.put('/api/hive', async (req, res) => {
+  const { hiveId, areaId, name } = req.body;
+
+  // hiveId가 없으면 문제
+  if (!hiveId) {
+    return res.status(400).send('Bad Request: Missing hiveId');
+  }
+
+  try {
+    const result = await database.updateHive(dbConnection, { hiveId, areaId, name });
+    if(result.updated) {
+      return res.status(200).json({message: 'Hive updated successfully', hiveId: result.hiveId});
+    } else {
+      return res.status(404).json({message: 'Hive not found', hiveId: result.hiveId});
+    }
+  } catch (error) {
+    console.error('Error updating hive:', error);
     return res.status(500).send('Internal Server Error');
   }
 });
@@ -335,6 +373,27 @@ app.post('/api/device', async (req, res) => {
     }
   } catch (error) {
     console.error('Error adding device:', error);
+    return res.status(500).send('Internal Server Error');
+  }
+});
+
+app.put('/api/device', async (req, res) => {
+  const { deviceId, name } = req.body;
+
+  // deviceId가 없으면 문제
+  if (!deviceId) {
+    return res.status(400).send('Bad Request: Missing deviceId');
+  }
+
+  try {
+    const result = await database.updateDevice(dbConnection, { deviceId, name });
+    if(result.updated) {
+      return res.status(200).json({message: 'Device updated successfully', deviceId: result.deviceId});
+    } else {
+      return res.status(404).json({message: 'Device not found', deviceId: result.deviceId});
+    }
+  } catch (error) {
+    console.error('Error updating device:', error);
     return res.status(500).send('Internal Server Error');
   }
 });
