@@ -3,26 +3,30 @@
 <html lang="ko">
     <head>
         <meta charset="UTF-8">
-        <title>AREA 목록</title>
+        <title>AREA 관리</title>
         <link rel="stylesheet" href="css/styles.css">
     </head>
 <body>
     <div class="container">
         <!-- 타이틀을 주황색 헤더로 두름 -->
         <div class="header">
-            <h2>AREA 목록</h2>
+            <div class="nav-back">
+                <a id="back-link" href="/honeybee" class="back-link">이전</a>
+            </div>
+            <h2>AREA 관리</h2>
         </div>
 
         <!-- 검색 영역 -->
         <div class="search-container">
             <select id="searchDropdown">
-                <option value="region">지역 이름</option>
+                <option value="id">AREA ID</option>
+                <option value="name">지역 이름</option>
             </select>
             <input type="text" id="searchQuery" placeholder="검색어 입력">
             <button id="searchBtn">검색</button>
         </div>
 
-        <button onclick="window.location.href='/honeybee/management/area_add.html'">AREA 추가</button>
+        <button onclick="window.location.href='area_add.html'">AREA 추가</button>
         <table id="areaTable">
             <thead>
                 <tr>
@@ -39,19 +43,19 @@
                 <!-- 2: [36.544, 128.8007] // 안동대 -->
                 <tr>
                     <td>1</td>
-                    <td><a href="/honeybee/management/area_list.html?area_id=1">인천대</a></td>
+                    <td><a href="area_list.html?area_id=1">인천대</a></td>
                     <td>37.375, 126.633</td>
                     <td class="actions">
-                        <button onclick="window.location.href='/honeybee/management/area_add.html?area_id=1'">수정</button>
+                        <button onclick="window.location.href='area_add.html?area_id=1'">수정</button>
                         <button class="delete" onclick="prepareDelete('area', 1)">삭제</button>
                     </td>
                 </tr>
                 <tr>
                     <td>2</td>
-                    <td><a href="/honeybee/management/area_list.html?area_id=2">안동대</a></td>
+                    <td><a href="area_list.html?area_id=2">안동대</a></td>
                     <td>36.544, 128.8007</td>
                     <td class="actions">
-                        <button onclick="window.location.href='/honeybee/management/area_add.html?area_id=2'">수정</button>
+                        <button onclick="window.location.href='area_add.html?area_id=2'">수정</button>
                         <button class="delete" onclick="prepareDelete('area', 2)">삭제</button>
                 </tr>
                 <!-- 실제 데이터는 API를 통해 동적으로 삽입 -->
@@ -61,9 +65,7 @@
 
     <!-- 모달 로드 -->
     <div id="modal"></div>
-
-    <script src="/honeybee/management/scripts/navbar.js"></script>
-    <script src="/honeybee/management/scripts/modal.js"></script>
-    <script src="/honeybee/management/scripts/area_list.js"></script>
+    <script src="scripts/modal.js"></script>
+    <script src="scripts/area_list.js"></script>
 </body>
 </html>

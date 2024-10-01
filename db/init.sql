@@ -44,7 +44,8 @@ CREATE TABLE IF NOT EXISTS hives (
 -- AREAS 테이블 생성 및 초기 데이터 삽입
 CREATE TABLE IF NOT EXISTS areas (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255)
+    name VARCHAR(255),
+    location VARCHAR(255)
 );
 
 INSERT INTO areas (id, name) VALUES

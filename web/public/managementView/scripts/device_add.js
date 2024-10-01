@@ -1,14 +1,26 @@
-// public/js/device_add.js
+// device_add.js
 document.addEventListener('DOMContentLoaded', async () => {
+
+    // select box에 deviceType 목록 추가
+    const deviceTypes = await getDeviceTypes();
+    const deviceTypeSelect = document.getElementById('deviceType');
+    deviceTypeSelect.innerHTML = '';
+    deviceTypes.forEach(deviceType => {
+        const option = document.createElement('option');
+        option.value = deviceType.id;
+        option.textContent = deviceType.name;
+        deviceTypeSelect.appendChild(option);
+    });
+
     const urlParams = new URLSearchParams(window.location.search);
     const hiveId = urlParams.get('hive_id');
     const deviceId = urlParams.get('device_id'); // 수정 시 사용
 
     const title = document.getElementById('deviceAddTitle');
-    const addButton = document.getElementById('addDeviceButton');
+    const hive_name = await getHiveNameById(hiveId);
 
     if (deviceId) {
-        title.textContent = 'DEVICE 수정';
+        title.textContent = `(${hive_name}) : DEVICE 수정`;
     
         // 수정할때 deviceType 수정 불가
         document.getElementById('deviceType').disabled = true;
@@ -27,7 +39,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             window.location.href = `device_list.html?hive_id=${hiveId}`;
         }
     } else {
-        title.textContent = `DEVICE 추가 (HIVE ID: ${hiveId})`;
+        title.textContent = `(${hive_name}) : DEVICE 추가`;
     }
 
     const form = document.getElementById('deviceAddForm');
@@ -89,6 +101,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 });
 
+// HIVE ID로 HIVE 이름 가져오기 (예시 함수)
+async function getHiveNameById(id) {
+    const url = `/honeybee/api/hive?hiveId=${id}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    // data가 존재하고 배열이 아닐 경우 처리
+    if (!Array.isArray(data) || data.length === 0) {
+        return 'Unknown';
+    }
+
+    // data 배열에서 id에 맞는 hive 찾기
+    const hive = data.find(hive => hive.id === parseInt(id));
+
+    // hive가 존재하고 name이 있으면 반환, 없으면 'Unknown'
+    return hive && hive.name ? hive.name : 'Unknown';
+}
+
 async function getDeviceById(id) {
     const url = `/honeybee/api/device?deviceId=${id}`;
     const response = await fetch(url);
@@ -103,4 +133,16 @@ async function getDeviceById(id) {
 
     // device가 존재하면 반환, 없으면 null
     return device && device.name ? device : null;
+}
+
+async function getDeviceTypes() {
+    const url = '/honeybee/api/devicetypes';
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (!data || !data.length) {
+        return [];
+    }
+
+    return data;
 }

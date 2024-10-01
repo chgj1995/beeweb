@@ -7,11 +7,10 @@
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <!-- 네비게이션 바 로드 -->
-    <div id="navbar"></div>
-
     <div class="container">
-        <h2 id="deviceAddTitle">DEVICE 추가</h2>
+        <div class="header">
+            <h2 id="deviceAddTitle">DEVICE 추가</h2>
+        </div>
         <form id="deviceAddForm">
             <label for="deviceName">디바이스 이름:</label><br>
             <input type="text" id="deviceName" name="deviceName" required><br><br>
@@ -30,8 +29,7 @@
     <!-- 모달 로드 -->
     <div id="modal"></div>
 
-    <script src="/honeybee/management/scripts/navbar.js"></script>
-    <script src="/honeybee/management/scripts/modal.js"></script>
-    <script src="/honeybee/management/scripts/device_add.js"></script>
+    <script src="scripts/modal.js"></script>
+    <script src="scripts/device_add.js"></script>
 </body>
 </html>

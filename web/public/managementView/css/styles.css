@@ -118,3 +118,18 @@ tr:nth-child(even) {
     gap: 10px;
     margin-bottom: 20px;
 }
+
+.nav-back {
+    margin-bottom: 10px; /* 타이틀과의 간격 */
+}
+
+.back-link {
+    font-size: 14px;
+    color: blue;
+    text-decoration: none;
+}
+
+.back-link:hover {
+    text-decoration: underline;
+    color: #e07b00;
+}

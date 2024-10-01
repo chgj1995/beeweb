@@ -185,6 +185,7 @@ function createCheckboxElement(id, type_id, name) {
     //     'SENSOR': 2,
     //     'INOUT': 3,
     //   };
+    // TODO : API콜로 TYPE 받아오도록 수정
     if(type_id == 2) {
         label.textContent = `[Env] ${name}`;
     } else if (type_id == 3) {

@@ -100,6 +100,11 @@ honeybeeRouter.get('/exportView', ensureAuthenticated, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'exportView/exportView.html'));
 });
 
+// management 라우트 추가
+honeybeeRouter.get('/managementView', ensureAuthenticated, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'managementView/area_list.html'));
+});
+
 // Route to serve the index page
 honeybeeRouter.get('/', ensureAuthenticated, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));

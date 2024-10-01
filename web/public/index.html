@@ -17,6 +17,7 @@
 
         .container {
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             flex: 1;
@@ -34,9 +35,11 @@
 
         .button-container {
             display: flex;
+            flex-direction: row;
             width: 100%;
             max-width: 1200px;
             gap: 20px;
+            padding: 10px;
         }
 
         .button-container button {
@@ -57,19 +60,6 @@
             background-color: #e07b00;
         }
 
-        @media (max-width: 768px) {
-            .button-container {
-                flex-direction: column;
-            }
-
-            .button-container button {
-                margin-bottom: 10px;
-            }
-
-            .button-container button:last-child {
-                margin-bottom: 0;
-            }
-        }
     </style>
     <link rel="stylesheet" href="/honeybee/account/css/header_login.css">
 </head>
@@ -84,11 +74,14 @@
     <!-- Button Container -->
     <div class="container">
         <div class="button-container">
-            <button onclick="location.href='/honeybee/hiveView'">HiveView</button>
+            <button onclick="location.href='/honeybee/hiveView'">Hive View</button>
             <button onclick="location.href='/honeybee/compareView'">Compare View</button>
         </div>
+        <div class="button-container">
+            <button onclick="location.href='/honeybee/exportView'">Export Data</button>
+            <button onclick="location.href='/honeybee/managementView'">Management</button>
+        </div>
     </div>
-
     <!-- Footer -->
     <div class="footer">
         <p>Wireless Communication LAB, Dept of Embedded System Engineering, Incheon National University</p>

@@ -7,24 +7,25 @@
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <!-- 네비게이션 바 로드 -->
-    <div id="navbar"></div>
-
     <div class="container">
-        <h2>AREA 추가</h2>
+        <div class="header">
+            <h2 id="areaAddTitle">AREA 추가</h2>
+        </div>
+
         <form id="areaAddForm">
             <label for="areaName">지역 이름:</label><br>
             <input type="text" id="areaName" name="areaName" required><br><br>
+            <label for="areaLocation">위치:</label><br>
+            <input type="text" id="areaLocation" name="areaLocation" value="0.0, 0.0"><br><br>
             <button type="submit">저장</button>
-            <button type="button" onclick="window.location.href='/honeybee/management/hive_list.html'">취소</button>
+            <button type="button" onclick="window.location.href='hive_list.html'">취소</button>
         </form>
     </div>
 
     <!-- 모달 로드 -->
     <div id="modal"></div>
 
-    <script src="/honeybee/management/scripts/navbar.js"></script>
-    <script src="/honeybee/management/scripts/modal.js"></script>
-    <script src="/honeybee/management/scripts/area_add.js"></script>
+    <script src="scripts/modal.js"></script>
+    <script src="scripts/area_add.js"></script>
 </body>
 </html>
