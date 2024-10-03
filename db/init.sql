@@ -48,10 +48,10 @@ CREATE TABLE IF NOT EXISTS areas (
     location VARCHAR(255)
 );
 
-INSERT INTO areas (id, name) VALUES
-    (1, '인천대'),
-    (2, '안동대'),
-    (3, '농과원')
+INSERT INTO areas (id, name, location) VALUES
+    (1, '인천대', '37.375, 126.633'),
+    (2, '안동대', '36.544, 128.8007'),
+    (3, '농과원', '0.0, 0.0')
 ON DUPLICATE KEY UPDATE name = VALUES(name);
 
 -- DEVICES 테이블 생성

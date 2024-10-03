@@ -143,7 +143,7 @@ app.post('/api/uplink', async (req, res) => {
 
     // type 획득
     const types = await database.getDeviceTypes(dbConnection);
-    typeName = types.find(item => item.id === type).name;
+    const typeName = types.find(item => item.id === parseInt(type)).name;
     // 각 Type에 맞게 데이터 삽입
     if(typeName === 'INOUT') {
       const {inField, outField } = req.body;
@@ -177,6 +177,7 @@ app.post('/api/upload', upload.any(), async (req, res) => {
     let type;
     let data = [];
     if (req.is('multipart/form-data')) {
+
       let files = req.files.filter(file => file.fieldname.startsWith('file'));
       // Handle multipart/form-data
       type = req.body.type;
@@ -230,7 +231,7 @@ app.post('/api/upload', upload.any(), async (req, res) => {
 
     // type 획득
     const types = await database.getDeviceTypes(dbConnection);
-    typeName = types.find(item => item.id === type).name;
+    const typeName = types.find(item => item.id === parseInt(type)).name;
     // 각 Type에 맞게 데이터 삽입
     if(typeName === 'INOUT') {
       await handleInOutData(dbConnection, data);

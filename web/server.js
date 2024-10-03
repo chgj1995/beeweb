@@ -105,14 +105,14 @@ honeybeeRouter.get('/managementView', ensureAuthenticated, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'managementView/area_list.html'));
 });
 
+// pictureView 라우트 추가
+honeybeeRouter.get('/pictureView', ensureAuthenticated, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'pictureView/pictureView.html'));
+});
+
 // Route to serve the index page
 honeybeeRouter.get('/', ensureAuthenticated, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-// Route to serve the HTML view with query parameters
-honeybeeRouter.get('/test', ensureAuthenticated, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'test.html'));
 });
 
 // 로그인 라우터 추가

@@ -1,82 +1,59 @@
-<!DOCTYPE html>
-<html lang="ko">
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>honey bee main</title>
+.header,
+.footer {
+    background-color: #fcefb4;
+    color: #372b2b;
+    text-align: center;
+    padding: 10px 0;
+    font-family: Arial, sans-serif;
+}
 
-    <style>
-        body {
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            margin: 0;
-            font-family: Arial, sans-serif;
-        }
+.container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    flex: 1;
+    padding: 20px;
+}
 
-        .container {
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            flex: 1;
-            padding: 20px;
-        }
+.button-container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    max-width: 1200px;
+    gap: 20px;
+    padding: 10px;
+}
 
-        .header,
-        .footer {
-            background-color: #fcefb4;
-            color: #372b2b;
-            text-align: center;
-            padding: 10px 0;
-            font-family: Arial, sans-serif;
-        }
+.button-container button {
+    padding: 30px;
+    font-size: 24px;
+    background-color: rgb(255, 151, 0);
+    color: white;
+    border: 2px solid #ff8c00;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    flex: 1;
+    text-align: center;
+    font-weight: bold;
+}
 
-        .button-container {
-            display: flex;
-            justify-content: space-around;
-            width: 100%;
-        }
+.button-container button:hover {
+    background-color: #e07b00;
+}
 
-        .button-container button {
-            padding: 30px 50px;
-            font-size: 24px;
-            background-color: rgb(255,151,0);
-            color: white;
-            border: 2px solid #ff8c00;
-            border-radius: 15px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            flex-grow: 1;
-            margin: 0 20px;
-            text-align: center;
-            font-weight: bold;
-        }
-
-        .button-container button:hover {
-            background-color: #e07b00;
-        }
-    </style>
-</head>
-
-<body>
-    <!-- Header -->
-    <div class="header">
-        <h1>Smart Hive State Viewer</h1>
-    </div>
-
-    <!-- Button Container -->
-    <div class="container">
-        <div class="button-container">
-            <button onclick="location.href='hiveView.html'">HiveView</button>
-            <button onclick="location.href='compareView.html'">Compare View</button>
-        </div>
-    </div>
-
-    <!-- Footer -->
-    <div class="footer">
-        <p>Wireless Communication LAB, Dept of Embedded System Engineering, Incheon National University</p>
-    </div>
-</body>
-
-</html>
+.empty-button {
+    flex: 1;
+    padding: 30px; /* 버튼과 동일한 padding 적용 */
+    border-radius: 15px; /* 버튼과 동일한 모서리 둥글기 적용 */
+    visibility: hidden; /* 화면에 보이지 않게 처리 */
+}

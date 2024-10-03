@@ -5,62 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>honey bee main</title>
-
-    <style>
-        body {
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            margin: 0;
-            font-family: Arial, sans-serif;
-        }
-
-        .container {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            flex: 1;
-            padding: 20px;
-        }
-
-        .header,
-        .footer {
-            background-color: #fcefb4;
-            color: #372b2b;
-            text-align: center;
-            padding: 10px 0;
-            font-family: Arial, sans-serif;
-        }
-
-        .button-container {
-            display: flex;
-            flex-direction: row;
-            width: 100%;
-            max-width: 1200px;
-            gap: 20px;
-            padding: 10px;
-        }
-
-        .button-container button {
-            padding: 30px;
-            font-size: 24px;
-            background-color: rgb(255, 151, 0);
-            color: white;
-            border: 2px solid #ff8c00;
-            border-radius: 15px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            flex: 1;
-            text-align: center;
-            font-weight: bold;
-        }
-
-        .button-container button:hover {
-            background-color: #e07b00;
-        }
-
-    </style>
+    <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="/honeybee/account/css/header_login.css">
 </head>
 
@@ -76,6 +21,11 @@
         <div class="button-container">
             <button onclick="location.href='/honeybee/hiveView'">Hive View</button>
             <button onclick="location.href='/honeybee/compareView'">Compare View</button>
+        </div>
+        <div class="button-container">
+            <button onclick="location.href='/honeybee/pictureView'">Picture View</button>
+            <!-- 빈 칸을 차지하는 요소 -->
+            <div class="empty-button"></div>
         </div>
         <div class="button-container">
             <button onclick="location.href='/honeybee/exportView'">Export Data</button>
