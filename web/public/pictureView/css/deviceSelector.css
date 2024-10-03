@@ -1,0 +1,18 @@
+.selector-container {
+    margin: 20px;
+}
+.inline-selectors {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 10px;
+}
+select {
+    padding: 10px;
+    font-size: 16px;
+}
+.device-list {
+    margin-top: 20px;
+}
+.device-item {
+    margin-bottom: 10px;
+}
