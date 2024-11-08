@@ -15,6 +15,8 @@ services:
     volumes:
       - db_data:/var/lib/mysql
     restart: always
+    networks:
+      - shared-network
 
   api:
     build:
@@ -30,6 +32,8 @@ services:
       DB_PASSWORD: password
       DB_NAME: hive_data
     restart: always
+    networks:
+      - shared-network
 
   data-collector:
     build:
@@ -41,6 +45,8 @@ services:
       CHANNEL_ID1: ${CHANNEL_ID1}
       CHANNEL_ID2: ${CHANNEL_ID2}
     restart: always
+    networks:
+      - shared-network
 
   web:
     build:
@@ -51,11 +57,18 @@ services:
     environment:
       SESSION_SECRET: ${SESSION_SECRET}
     ports:
-      - "80:80"
+      - "8081:8081"
     volumes:
       - ./web:/usr/src/app   # 로컬 경로를 컨테이너 경로로 마운트
       - /usr/src/app/node_modules   # node_modules는 컨테이너 내부에만 존재하게 함
     restart: always
+    networks:
+      - shared-network
+
 
 volumes:
   db_data:
+
+networks:
+  shared-network:
+    # external: true
