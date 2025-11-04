@@ -85,3 +85,38 @@ export const getSensorData2 = async (
 
     return rows as SensorData2Row[];
 };
+
+export const streamSensorDataForExport = async (
+    deviceIds: number[],
+    sTime: string,
+    eTime: string,
+    dataTypes: number[]
+): Promise<any> => {
+    if (deviceIds.length === 0 || dataTypes.length === 0) {
+        throw new Error("Device IDs and data types must be provided.");
+    }
+
+    const deviceIdPlaceholders = deviceIds.map(() => '?').join(', ');
+    const dataTypePlaceholders = dataTypes.map(() => '?').join(', ');
+
+    const query = `
+        SELECT
+            DATE_FORMAT(s.time, '%Y-%m-%d %H:%i:%s') as Time,
+            h.name AS 'Hive Name',
+            d.name AS 'Device Name',
+            dt.name AS 'Data Type',
+            COALESCE(s.data_float, s.data_int) AS Value
+        FROM sensor_data2 s
+        JOIN devices d ON s.device_id = d.id
+        JOIN hives h ON d.hive_id = h.id
+        JOIN data_types dt ON s.data_type = dt.id
+        WHERE s.device_id IN (${deviceIdPlaceholders})
+          AND s.data_type IN (${dataTypePlaceholders})
+          AND s.time BETWEEN ? AND ?
+        ORDER BY s.time ASC
+    `;
+
+    const params = [...deviceIds, ...dataTypes, sTime, eTime];
+    const [rows] = await pool.query(query, params);
+    return rows;
+};

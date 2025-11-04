@@ -21,12 +21,42 @@
         }
       }
     },
+    "/summary": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/backup": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/correct": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/areahive": {
       "get": {
         "tags": [
           "Legacy"
         ],
-        "description": "Endpoint to fetch all area hives",
+        "description": "Fetch all area hives",
         "responses": {
           "200": {
             "description": "OK"
@@ -53,14 +83,14 @@
           },
           {
             "name": "sTime",
-            "description": "Start time (ISO 8601, e.g. 2025-05-04T14:13:00Z)",
+            "description": "Start time ISO8601",
             "required": true,
             "in": "query",
             "type": "string"
           },
           {
             "name": "eTime",
-            "description": "End time (ISO 8601, e.g. 2025-05-11T14:13:00Z)",
+            "description": "End time ISO8601",
             "required": true,
             "in": "query",
             "type": "string"
@@ -84,7 +114,7 @@
         "tags": [
           "Legacy"
         ],
-        "description": "Login forwarding to user route",
+        "description": "Forward login to user route",
         "responses": {
           "default": {
             "description": ""
@@ -97,7 +127,7 @@
         "tags": [
           "Legacy"
         ],
-        "description": "Forward device types requests to device route",
+        "description": "Forward device types to device route",
         "responses": {
           "default": {
             "description": ""
@@ -121,14 +151,14 @@
           },
           {
             "name": "sTime",
-            "description": "Start time (ISO 8601, e.g. 2025-05-04T14:13:00Z)",
+            "description": "Start time ISO8601",
             "required": true,
             "in": "query",
             "type": "string"
           },
           {
             "name": "eTime",
-            "description": "End time (ISO 8601, e.g. 2025-05-11T14:13:00Z)",
+            "description": "End time ISO8601",
             "required": true,
             "in": "query",
             "type": "string"
@@ -152,7 +182,7 @@
         "tags": [
           "Legacy"
         ],
-        "description": "Forward camera requests to data route",
+        "description": "Forward camera requests to picture route",
         "responses": {
           "default": {
             "description": ""
@@ -165,7 +195,7 @@
         "tags": [
           "Legacy"
         ],
-        "description": "Uplink adapter for legacy to sensor2 format",
+        "description": "Legacy uplink adapter for sensor data",
         "parameters": [
           {
             "name": "body",
@@ -174,6 +204,15 @@
               "type": "object",
               "properties": {
                 "id": {
+                  "example": "any"
+                },
+                "inField": {
+                  "example": "any"
+                },
+                "outField": {
+                  "example": "any"
+                },
+                "rest": {
                   "example": "any"
                 }
               }
@@ -195,8 +234,22 @@
         "tags": [
           "Legacy"
         ],
-        "description": "Upload adapter for legacy format to sensor2 format",
+        "description": "Legacy upload adapter: forward to sensor2 or picture upload",
         "parameters": [
+          {
+            "name": "type",
+            "description": "Device type ID",
+            "required": true,
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "data",
+            "description": "Legacy data array or multipart fields",
+            "required": true,
+            "in": "query",
+            "type": "string"
+          },
           {
             "name": "body",
             "in": "body",
@@ -214,8 +267,11 @@
           }
         ],
         "responses": {
-          "default": {
-            "description": ""
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Internal Server Error"
           }
         }
       }
@@ -798,6 +854,13 @@
             "required": true,
             "in": "query",
             "type": "string"
+          },
+          {
+            "name": "level",
+            "description": "raw | 5m | 30m | 2h | auto(default)",
+            "required": false,
+            "in": "query",
+            "type": "string"
           }
         ],
         "responses": {
@@ -936,6 +999,70 @@
             "description": "Internal Server Error"
           }
         }
+      }
+    },
+    "/picture/": {
+      "get": {
+        "tags": [
+          "Picture"
+        ],
+        "description": "Fetch pictures for a device within a time range",
+        "parameters": [
+          {
+            "name": "deviceId",
+            "in": "query",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "name": "sTime",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "name": "eTime",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "format": "date-time"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/picture/upload": {
+      "post": {
+        "tags": [
+          "Picture"
+        ],
+        "description": "Upload one or more pictures (JSON or multipart/form-data)",
+        "responses": {
+          "201": {
+            "description": "Upload successful"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "requestBody": {}
       }
     }
   }
