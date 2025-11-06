@@ -23,7 +23,7 @@ export const initializeDatabase = async () => {
       UNIQUE KEY unique_name (name)
     )`);
     await pool.query(`INSERT INTO data_types (id, name) VALUES
-      (1, 'picture'), (2, 'in'), (3, 'out'), (4, 'temp'), (5, 'humi'), (6, 'co2'), (7, 'weigh')
+      (1, 'PICTURE'), (2, 'IN'), (3, 'OUT'), (4, 'TEMP'), (5, 'HUMI'), (6, 'CO2'), (7, 'WEIGH')
       ON DUPLICATE KEY UPDATE name = VALUES(name)`);
 
     await pool.execute(`CREATE TABLE IF NOT EXISTS sensor_data2 (
