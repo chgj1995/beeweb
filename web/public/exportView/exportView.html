@@ -3,84 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <title>HIVE 데이터 내보내기</title>
-
-    <link rel="stylesheet" href="css/global-layout.css">
-    <link rel="stylesheet" href="exportView/css/styles.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="../css/global-layout.css">
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
     <div class="container">
         <!-- Header -->
         <div id="global-header"></div>
 
-        <!-- 타이틀을 주황색 헤더로 두름 -->
         <div class="header">
             <h2>HIVE 데이터 내보내기</h2>
         </div>
 
-        <!-- 검색 및 저장 영역 -->
-        <div class="search-save-container">
-            <!-- 검색 영역 -->
-            <div class="search-container">
-                <select id="searchDropdown">
-                    <option value="id">HIVE ID</option>
-                    <option value="name">HIVE 이름</option>
-                    <option value="region">지역 이름</option>
-                </select>
-                <input type="text" id="searchQuery" placeholder="검색어 입력">
-                <button id="searchBtn">검색</button>
-            </div>
-
-            <!-- 저장 버튼 -->
-            <div class="action-buttons">
-                <button id="saveBtn">저장</button>
-            </div>
+        <!-- 작업 이력 테이블 -->
+        <div class="job-history-container">
+            <h3>작업 이력</h3>
+            <table id="jobHistoryTable">
+                <thead>
+                    <tr>
+                        <th>Job ID</th>
+                        <th>상태</th>
+                        <th>진행률</th>
+                        <th>생성 시간</th>
+                        <th>작업</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- 작업 이력 데이터가 여기에 동적으로 삽입됩니다. -->
+                </tbody>
+            </table>
         </div>
 
-        <!-- time-selector -->
-        <div class="time-selector">
-            <button onclick="setPreset('day')">1일</button>
-            <button onclick="setPreset('week')">1주</button>
-            <button onclick="setPreset('month')">1달</button>
-            시작: <input type="datetime-local" id="startDate">
-            종료: <input type="datetime-local" id="endDate">
-        </div>
+        <div class="export-container">
+            <!-- 검색 및 저장 영역 -->
+            <div class="search-save-container">
+                <!-- 검색 영역 -->
+                <div class="search-container">
+                    <select id="searchDropdown">
+                        <option value="id">HIVE ID</option>
+                        <option value="name">HIVE 이름</option>
+                        <option value="region">지역 이름</option>
+                    </select>
+                    <input type="text" id="searchQuery" placeholder="검색어 입력">
+                    <button id="searchBtn">검색</button>
+                </div>
 
-        <!-- 테이블 영역 -->
-        <table id="hiveTable">
-            <thead>
-                <tr>
-                    <th class="selectColumn"><input type="checkbox" id="selectAll" onclick="toggleSelectAll()"> 전체 선택</th>
-                    <th>HIVE ID</th>
-                    <th>HIVE 이름</th>
-                    <th>지역 이름</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- 실제 데이터는 JavaScript를 통해 동적으로 삽입 -->
-                <!-- 예시 데이터 -->
-                <tr>
-                    <td><input type="checkbox" class="selectItem"></td>
-                    <td>1</td>
-                    <td>Hive A</td>
-                    <td>인천대</td>
-                </tr>
-                <tr>
-                    <td><input type="checkbox" class="selectItem"></td>
-                    <td>2</td>
-                    <td>Hive B</td>
-                    <td>안동대</td>
-                </tr>
-            </tbody>
-        </table>
+                <!-- 데이터 종류 선택 -->
+                <div class="data-type-selector">
+                    <label><input type="checkbox" name="dataType" value="sensor" checked> 센서 데이터</label>
+                    <label><input type="checkbox" name="dataType" value="picture"> 사진</label>
+                </div>
+
+                <!-- 내보내기 버튼 -->
+                <div class="action-buttons">
+                    <button id="exportBtn">내보내기</button>
+                </div>
+            </div>
+
+            <!-- time-selector -->
+            <div class="time-selector">
+                <button onclick="setPreset('day')">1일</button>
+                <button onclick="setPreset('week')">1주</button>
+                <button onclick="setPreset('month')">1달</button>
+                시작: <input type="datetime-local" id="startDate">
+                종료: <input type="datetime-local" id="endDate">
+            </div>
+
+            <!-- 테이블 영역 -->
+            <table id="hiveTable">
+                <thead>
+                    <tr>
+                        <th class="selectColumn"><input type="checkbox" id="selectAll" onclick="toggleSelectAll()"> 전체 선택</th>
+                        <th>HIVE ID</th>
+                        <th>HIVE 이름</th>
+                        <th>지역 이름</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- 실제 데이터는 JavaScript를 통해 동적으로 삽입 -->
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <!-- footer -->
     <div id="global-footer"></div>
 
-    <script src="scripts/global-layout.js"></script>
-    <script src="exportView/scripts/timeSelector.js"></script>
-    <script src="exportView/scripts/hive_list.js"></script>
-    <script src="exportView/scripts/export.js"></script>
+    <script src="../scripts/global-layout.js"></script>
+    <script src="scripts/timeSelector.js"></script>
+    <script src="scripts/hive_list.js"></script>
+    <script src="scripts/export.js"></script>
 </body>
 </html>

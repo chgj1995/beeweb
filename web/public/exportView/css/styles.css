@@ -1,35 +1,97 @@
 body {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    margin: 0;
-    font-family: Arial, sans-serif;
-}
-
-.header {
-    background-color: #fcefb4;
-    color: black;
-    text-align: left;
-    padding: 20px;
-    margin: -20px -20px 20px -20px; /* 헤더에만 여백을 없애고 상단 좌우 제거 */
-}
-
-.header,
-.footer {
-    background-color: #fcefb4;
-    color: #372b2b;
-    text-align: center;
-    padding: 10px 0;
     font-family: Arial, sans-serif;
 }
 
 .container {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
+    padding: 20px;
 }
 
-.container button {
+.header {
+    background-color: #fcefb4;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+}
+
+/* 작업 이력 컨테이너 */
+.job-history-container {
+    margin-bottom: 30px;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+/* 내보내기 설정 컨테이너 */
+.export-container {
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.search-save-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.search-container, .data-type-selector, .action-buttons {
+    display: flex;
+    align-items: center;
+}
+
+.data-type-selector label {
+    margin-right: 15px;
+}
+
+.time-selector {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+#hiveTable, #jobHistoryTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+#hiveTable th, #hiveTable td, #jobHistoryTable th, #jobHistoryTable td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+#hiveTable th, #jobHistoryTable th {
+    background-color: #f2f2f2;
+}
+
+/* 상태 및 진행률에 대한 스타일 */
+.status {
+    font-weight: bold;
+}
+.status.completed { color: green; }
+.status.processing { color: blue; }
+.status.failed { color: red; }
+
+.progress {
+    width: 100px;
+}
+
+/* 작업 버튼 */
+.actions button {
+    margin-right: 5px;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+.actions button:hover {
+    opacity: 0.8;
+}
+
+button {
     padding: 10px 15px;
     background-color: rgb(255, 151, 0);
     color: white;
@@ -39,71 +101,6 @@ body {
     font-weight: bold;
 }
 
-.container button:hover {
+button:hover {
     background-color: #e07b00;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-}
-
-table,
-th,
-td {
-    border: 1px solid #372B2B;
-}
-
-th,
-td {
-    padding: 12px;
-    text-align: left;
-    color: #372B2B;
-}
-
-tr:nth-child(even) {
-    background-color: #FFF8DC;
-}
-
-/* 선택 칸의 너비를 헤더 길이에 맞춤 */
-th.selectColumn {
-    width: 100px;
-}
-
-/* 검색 및 저장 영역을 하나의 행으로 구성 */
-.search-save-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-/* 검색 영역 스타일 */
-.search-container {
-    display: flex;
-    align-items: center;
-}
-
-/* 저장 버튼 스타일 */
-.action-buttons {
-    display: flex;
-}
-
-/* 버튼과 입력 필드 간격 조절 */
-.search-container select,
-.search-container input,
-.search-container button {
-    margin-right: 10px;
-}
-
-.time-selector {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 1rem;
-    background: #f9f9f9;
-}
-.time-selector button {
-    margin: 0 0.5rem;
 }
