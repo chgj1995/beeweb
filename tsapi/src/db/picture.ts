@@ -63,3 +63,19 @@ export const getPictureData = async (
     const [rows] = await pool.execute(query, [deviceId, sTime, eTime]);
     return rows as PictureDataRow[];
 };
+
+export const getPictureDataForExport = async (
+    deviceId: number,
+    sTime: string,
+    eTime: string
+): Promise<string[]> => {
+    const query = `
+        SELECT path
+        FROM picture_data
+        WHERE device_id = ?
+          AND time BETWEEN ? AND ?
+        ORDER BY time ASC
+    `;
+    const [rows] = await pool.execute(query, [deviceId, sTime, eTime]);
+    return (rows as { path: string }[]).map(row => row.path);
+};

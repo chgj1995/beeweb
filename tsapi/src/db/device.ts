@@ -12,6 +12,17 @@ export const getDeviceTypes = async (): Promise<DeviceType[]> => {
     }
 }
 
+export const getDeviceByName = async (name: string): Promise<Device | null> => {
+    try {
+        const query = 'SELECT * FROM devices WHERE name = ?';
+        const [rows] = await pool.execute(query, [name]);
+        const devices = rows as Device[];
+        return devices.length > 0 ? devices[0] : null;
+    } catch (error) {
+        throw error;
+    }
+}
+
 // Fetch a device by ID
 export const getDeviceByDeviceId = async (deiceIdArray: number[]): Promise<Device[]> => {
     try {

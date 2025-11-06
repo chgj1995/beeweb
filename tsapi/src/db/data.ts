@@ -120,3 +120,21 @@ export const streamSensorDataForExport = async (
     const [rows] = await pool.query(query, params);
     return rows;
 };
+
+export const getDataTypesByNames = async (names: string[]): Promise<{ [name: string]: number }> => {
+    if (names.length === 0) return {};
+
+    const placeholders = names.map(() => '?').join(', ');
+    const query = `
+        SELECT id, name
+        FROM data_types
+        WHERE name IN (${placeholders})
+    `;
+    const [rows] = await pool.execute(query, names);
+
+    const mapping: { [name: string]: number } = {};
+    for (const row of rows as { id: number, name: string }[]) {
+        mapping[row.name] = row.id;
+    }
+    return mapping;
+};
